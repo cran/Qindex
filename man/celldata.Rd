@@ -5,17 +5,17 @@
 \alias{celldata}
 \alias{Ki67}
 \alias{PR}
-\title{Subset of Ki67 and PR Data}
+\title{Ki67 and PR Data}
 \format{
 \describe{
-\item{PATIENT_ID}{\link[base]{factor}, ..}
-\item{tissueID}{\link[base]{character}, ..}
-\item{RECURRENCE}{\link[survival]{Surv}, ...}
-\item{Marker}{\link[base]{numeric}, ...}
-\item{all other columns}{}
+\item{\code{PATIENT_ID}}{\link[base]{factor}, ..}
+\item{\code{RECURRENCE}}{\link[survival]{Surv}, ...}
+\item{\code{Marker}}{\link[base]{numeric}, ...}
+\item{\code{Array}}{\link[base]{character}, ..}
+\item{all other columns}{...}
 }
 
-An object of class \code{data.frame} with 467603 rows and 20 columns.
+An object of class \code{data.frame} with 467603 rows and 7 columns.
 }
 \usage{
 Ki67
@@ -23,7 +23,7 @@ Ki67
 PR
 }
 \description{
-A subset of Ki67 cell data containing 623 patients and PR cell data containing 631 patients.
+Ki67 cell data containing 623 patients and PR cell data containing 631 patients.
 A total of 572 patients are in common.
 }
 \keyword{datasets}

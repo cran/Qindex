@@ -2,51 +2,61 @@
 % Please edit documentation in R/sampleQp.R
 \name{sampleQp}
 \alias{sampleQp}
-\title{Cluster-specific sample quantiles for clustered data}
+\title{Cluster-Specific Sample Quantiles}
 \usage{
 sampleQp(
   data,
-  endpoint = "RECURRENCE",
   subjID = "PATIENT_ID",
-  sampleID,
   Qpredictor = "Marker",
-  probs = seq(from = 0.05, to = 0.95, by = 0.05),
-  aggregate_sampleID_quantile = c("median", "mean", "min", "Q1", "Q3", "max"),
+  FUN = "quantile",
+  include = setdiff(names(data), y = c(Qpredictor)),
+  exclude = NULL,
+  nQ = 101L,
+  type = 7,
   ...
 )
 }
 \arguments{
 \item{data}{\link[base]{data.frame}}
 
-\item{endpoint}{\link[base]{character} scalar, column name for the \link[survival]{Surv} endpoint}
-
-\item{subjID}{\link[base]{character} scalar, column name for subject/patient ID}
-
-\item{sampleID}{(optional) \link[base]{character} scalar,
-column name for \code{sampleID}, which is nested within \code{subjID}.
-When \code{sampleID} is missing, the analysis is performed with only one-level cluster of \code{subjID}}
+\item{subjID}{\link[base]{character} scalar, column name of the subject/patient index in \code{data}}
 
 \item{Qpredictor}{\link[base]{character} scalar, column name of the predictor variable}
 
-\item{probs}{\link[base]{numeric} vector, probabilities of the \link[stats]{quantile}s}
+\item{FUN}{\link[base]{function} for summary statistics, currently only supports \link[stats]{quantile}}
 
-\item{aggregate_sampleID_quantile}{\link[base]{character} vector, will be implemented in the next release}
+\item{include}{\link[base]{character} \link{vector}, predictors to be included}
 
-\item{...}{additional parameters, currently not in use ..}
+\item{exclude}{\link[base]{character} \link{vector}, predictors to be excluded}
+
+\item{nQ}{\link[base]{integer} scalar, number of equidistant quantiles between 0 and 1 (inclusive).
+Default is \code{101L}.}
+
+\item{type}{\link[base]{integer} scalar, see \link[stats]{quantile}}
+
+\item{...}{additional parameters, currently not in use.}
 }
 \value{
-\link{sampleQp} returns
-data set with one row per \code{subjID}, Np columns with Q(p), p=1,…, Np, and additional
-subject level variables designated to be kept in the data set.
-The code should allow for multiple clusters (\code{clusterID}) per subject (\code{subjID}) and output the
-mean or other summary statistic (according to user input for type of summary statistic) Q(p) for
-every p.
-(*) Let us first make use of \link[base]{summary.default}, which cover all options I can think about for now
+\link{sampleQp} returns a \link[base]{data.frame}, with aggregated \link[survival]{Surv} endpoint and
+\link[base]{numeric}, \link[base]{character}, or \link[base]{logical} predictors,
+in addition to a \link[base]{matrix} of quantiles.
 }
 \description{
-For a user-supplied sequence of percentiles, calculates sample quantiles in each independent cluster of observations.
+This function calculates vectors of \code{nQ} sample quantiles in each independent cluster of observations (sample or subject)
+Equidistant probabilities between 0 and 1 are used (including both ends).
+}
+\details{
+\link{sampleQp} calculates \eqn{N_p} sample quantiles in each independent cluster of observations
+defined by \code{subjID} or \code{sampleID}.
+Sample quantiles are stored in \eqn{N_p} columns for \eqn{Q(p)}, \eqn{p=1, \cdots, Np}
+Additional subject-level predictors may be designated to be kept in the data set.
 }
 \examples{
-# see ?BBC_dichotom
+Ki67_Qps = sampleQp(data = Ki67, subjID = 'PATIENT_ID', Qpredictor = 'Marker')
+head(Ki67_Qps)
+sapply(Ki67_Qps, FUN = class)   
+head(Ki67_Qps$Marker)
+   
+PR_Qps = sampleQp(data = PR, subjID = 'PATIENT_ID',  Qpredictor = 'Marker')
 
 }

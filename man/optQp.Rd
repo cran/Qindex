@@ -2,22 +2,26 @@
 % Please edit documentation in R/optQp.R
 \name{optQp}
 \alias{optQp}
-\title{\link{optQp}}
+\title{Optimal Quantile Predictor}
 \usage{
 optQp(x, n = 3L, ...)
 }
 \arguments{
-\item{x}{\link{evalQp} object}
+\item{x}{\link{eval_dichotom} object}
 
-\item{n}{\link[base]{integer} scalar}
+\item{n}{\link[base]{integer} scalar, number of optimal quantiles to be printed}
 
 \item{...}{additional parameters, not currently in use}
 }
 \value{
-\link{optQp} returns ..
+\link{optQp} returns a \link[base]{data.frame} with designated number of optimal quantiles
 }
 \description{
-\link{optQp}
+Wrapper of \link{eval_dichotom}.
+
+To create a \link[base]{data.frame} with designated number of optimal quantiles returned from \link{eval_dichotom}
+in addition to \code{subjID}, \link[survival]{Surv} endpoint and
+\link[base]{numeric}, \link[base]{character}, or \link[base]{logical} predictors
 }
 \examples{
 # see ?BBC_dichotom

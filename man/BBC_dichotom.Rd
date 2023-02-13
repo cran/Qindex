@@ -4,81 +4,61 @@
 \alias{BBC_dichotom}
 \title{Bootstrap Bias Correction for Dichotomization}
 \usage{
-BBC_dichotom(formula, data, optQ, R, seed, ...)
+BBC_dichotom(formula, data, contX, R = 200L, ...)
 }
 \arguments{
-\item{formula}{\link[stats]{formula}}
+\item{formula}{\link[stats]{formula}, with a \link[survival]{Surv}, \link[base]{logical},
+or \link[base]{numeric} endpoint
+and covariates to be included as is (i.e., without dichotomization).}
 
 \item{data}{\link[base]{data.frame}}
 
-\item{optQ}{\link[base]{character} scalar}
+\item{contX}{\link[base]{character} scalar,
+name of the \link[base]{matrix}
+containing the continuous predictor(s) to be dichotomized optimally}
 
-\item{R}{see \link[boot]{boot}}
+\item{R}{\link[base]{integer} scalar, number of bootstrap samples, see \link[boot]{boot}.
+Default \code{200L}.}
 
-\item{seed}{\link[base]{integer} scalar, random seeds for generating repeated samples, see \link[base]{set.seed}}
-
-\item{...}{..}
+\item{...}{additional parameters, currently not in use}
 }
 \value{
-..
+\link{BBC_dichotom} returns a \link[base]{numeric} bootstrap-based bias adjusted
+coefficients of model, corresponding median optimism, \code{R} bootstrap resampling based thresholds,
+and a single apparent performance threshold
 }
 \description{
-Bootstrap-based optimism correction for dichotomizing quantiles
+Bootstrap-based optimism correction for dichotomizing selected continuous predictor(s)
 }
 \details{
-The bootstrap optimism correction procedure (1)
-is performed as described for a general model selection in (2).
+The bootstrap optimism correction procedure
+is performed as described for a general model selection.
 First, \code{R} bootstrap samples are drawn with replacement from the main sample.
 In each bootstrap sample, the recursive partitioning tree model is used
-to establish an objective data-driven optimal cut-point for a specific optimal quantile.
-The cut-point from the current bootstrap sample is used to compute the log odds-ratio (OR) and/or hazards ratio (HR) for
-dichotomized quantile predictor in the current bootstrap sample (\strong{bootstrap performance})
+to establish an objective data-driven optimal cut-point for selected continuous predictors
+The cut-point from the current bootstrap sample is used to compute the effect size
+(log hazards ratio (HR), odds ratio (OR), or coefficient) for
+each dichotomized predictor in the current bootstrap sample (\strong{bootstrap performance})
 and in the main sample (\strong{test performance}),
-and the optimism in log OR/HR estimation is computed as the difference between
-log OR/HR for “Bootstrap performance” and for “Test performance”.
+and the optimism in log OR/HR or coefficient estimation is computed as the difference between
+log OR/HR or coefficient for "Bootstrap performance" and for "Test performance".
 The median optimism estimate is computed as the median of optimism estimates over all bootstrap samples.
-The cutpoint for dichotomizing each selected optimal quantile is also established in the
-main sample and its “apparent performance” is computed as the log OR/HR for
-dichotomized quantile in the univariate logistic regression or Cox models.
-Finally, the optimism-corrected performance estimate is computed by subtracting the mean
+The cutpoint for dichotomizing each selected continuous predictor is also established in the
+main sample and its "apparent performance" is computed as the log OR/HR or coefficient for
+dichotomized quantile in the univariate Cox models, logistic regression, or linear regression.
+Finally, the optimism-corrected performance estimate is computed by subtracting the median
 optimism estimate from the apparent performance estimate.
 }
 \examples{
+# see ?FRindex
+# see ?eval_dichotom
 
-\donttest{
-Ki67_Qps = sampleQp(data = Ki67, endpoint = 'RECURRENCE', subjID = 'PATIENT_ID', 
-  Qpredictor = 'Marker', probs = seq(from = .05, to = .95, by = .05))
-sapply(Ki67_Qps, FUN = class)   
-head(Ki67_Qps$Marker)
-(Ki67_eval = evalQp(RECURRENCE ~ Marker, data = Ki67_Qps, seeds = 1:100))
-lapply(Ki67_eval, FUN = dim)
-summary(Ki67_eval)
-Ki67_opt = optQp(Ki67_eval, n = 2L)
-colnames(Ki67_opt$Marker) = paste0('Ki67_', colnames(Ki67_opt$Marker))
-    
-PR_Qps = sampleQp(data = PR, endpoint = 'RECURRENCE', subjID = 'PATIENT_ID', 
-  Qpredictor = 'Marker', probs = seq(from = .05, to = .95, by = .05))
-head(PR_Qps$Marker)
-PR_eval = evalQp(RECURRENCE ~ Marker, data = PR_Qps, seeds = 1:100)
-PR_opt = optQp(PR_eval, n = 3L)
-colnames(PR_opt$Marker) = paste0('PR_', colnames(PR_opt$Marker))
+}
+\references{
+Ewout W. Steyerberg (2009) Clinical Prediction Models.
+\doi{10.1007/978-0-387-77244-8}
 
-cellOpt0 = merge(Ki67_opt, PR_opt, by = setdiff(names(Ki67_opt), 'Marker'),
-  suffixes = c('.Ki67', '.PR'))
-cellOpt = within(cellOpt0, expr = {
-  Marker = cbind(Marker.Ki67, Marker.PR)
-  Marker.Ki67 = Marker.PR = NULL
-})
-dim(cellOpt)
-names(cellOpt)
-head(cellOpt$Marker)
-
-mod = BBC_dichotom(RECURRENCE ~ NodeSt + Tstage, data = cellOpt, 
-  optQ = 'Marker', R = 100, seed = 1)
-names(mod)
-mod$ucox_dictom
-mod$mcox_dictom
-mod$median.optimism
-}  
-
+Frank E. Harrell Jr., Kerry L. Lee, Daniel B. Mark. (1996) Multivariable prognostic models: issues in developing models, evaluating
+assumptions and adequacy, and measuring and reducing errors.
+\doi{10.1002/(SICI)1097-0258(19960229)15:4<361::AID-SIM168>3.0.CO;2-4}
 }
