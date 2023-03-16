@@ -97,9 +97,10 @@
 #' if (FALSE) { # masked to save time
 #' library(survival)
 #' 
-#' Ki67_Qps = sampleQp(data = Ki67, subjID = 'PATIENT_ID', Qpredictor = 'Marker')
+#' Ki67_Qps = sampleQp(data = Ki67, subjID = 'PATIENT_ID', 
+#'   exclude = c('tissueID','inner_x','inner_y'), Qpredictor = 'Marker')
 #' Ki67c = eval_dichotom(Surv(RECFREESURV_MO, RECURRENCE) ~ Marker, data = Ki67_Qps, 
-#'   seeds = 1:5)
+#'   seeds = 1:20)
 #' # summary(Ki67c) # works, but not needed
 #' head(Ki67_opt <- optQp(Ki67c, n = 2L))
 #' 

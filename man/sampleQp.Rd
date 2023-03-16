@@ -8,10 +8,11 @@ sampleQp(
   data,
   subjID = "PATIENT_ID",
   Qpredictor = "Marker",
-  FUN = "quantile",
   include = setdiff(names(data), y = c(Qpredictor)),
   exclude = NULL,
-  nQ = 101L,
+  from = 0.01,
+  to = 0.99,
+  by = 0.01,
   type = 7,
   ...
 )
@@ -23,18 +24,16 @@ sampleQp(
 
 \item{Qpredictor}{\link[base]{character} scalar, column name of the predictor variable}
 
-\item{FUN}{\link[base]{function} for summary statistics, currently only supports \link[stats]{quantile}}
+\item{include}{\link[base]{character} \link{vector}, predictors to be included in output data set}
 
-\item{include}{\link[base]{character} \link{vector}, predictors to be included}
+\item{exclude}{\link[base]{character} \link{vector}, predictors to be excluded from output data set}
 
-\item{exclude}{\link[base]{character} \link{vector}, predictors to be excluded}
+\item{from, to, by}{see \link[base]{seq} a sequence of probabilities with starting, ending values, and interval
+to calculate corresponding quantiles}
 
-\item{nQ}{\link[base]{integer} scalar, number of equidistant quantiles between 0 and 1 (inclusive).
-Default is \code{101L}.}
+\item{type}{\link[base]{integer} scalar, type of the formula for quantiles,see \link[stats]{quantile}}
 
-\item{type}{\link[base]{integer} scalar, see \link[stats]{quantile}}
-
-\item{...}{additional parameters, currently not in use.}
+\item{...}{additional parameters, currently not in use}
 }
 \value{
 \link{sampleQp} returns a \link[base]{data.frame}, with aggregated \link[survival]{Surv} endpoint and
@@ -42,21 +41,22 @@ Default is \code{101L}.}
 in addition to a \link[base]{matrix} of quantiles.
 }
 \description{
-This function calculates vectors of \code{nQ} sample quantiles in each independent cluster of observations (sample or subject)
-Equidistant probabilities between 0 and 1 are used (including both ends).
+This function calculates vectors of sample quantiles in each independent cluster of observations (sample or subject)
+Equidistant probabilities between user provided p_{min} and p_{max} are used (including both ends).
 }
 \details{
 \link{sampleQp} calculates \eqn{N_p} sample quantiles in each independent cluster of observations
 defined by \code{subjID} or \code{sampleID}.
 Sample quantiles are stored in \eqn{N_p} columns for \eqn{Q(p)}, \eqn{p=1, \cdots, Np}
-Additional subject-level predictors may be designated to be kept in the data set.
+Additional subject-level predictors may be designated to be kept in the output data set.
+Observation-level predictors should be excluded from the input data set.
 }
 \examples{
-Ki67_Qps = sampleQp(data = Ki67, subjID = 'PATIENT_ID', Qpredictor = 'Marker')
+Ki67_Qps = sampleQp(data = Ki67, subjID = 'PATIENT_ID', 
+  exclude = c('tissueID','inner_x','inner_y'), Qpredictor = 'Marker')
 head(Ki67_Qps)
 sapply(Ki67_Qps, FUN = class)   
 head(Ki67_Qps$Marker)
-   
-PR_Qps = sampleQp(data = PR, subjID = 'PATIENT_ID',  Qpredictor = 'Marker')
+
 
 }

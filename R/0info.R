@@ -1,6 +1,6 @@
 
 
-#' @title Qindex: Optimization of continuous and dichotomized index predictors based on distribution quantiles
+#' @title Qindex: Continuous and dichotomized index predictors based on distribution quantiles
 #' 
 #' @description
 #' 
@@ -17,11 +17,11 @@
 #' cluster of observations.  This function is simply a wrapper of \link[stats]{aggregate}
 #' for \link[stats]{quantile} function.
 #' 
-#' \item use \link{eval_dichotom} to estimate the effect size for dichotomized user-selected sample quantiles
+#' \item use \link{eval_dichotom} to estimate the effect size for dichotomized user-selected predictors of interest (e.g. sample quantiles)
 #' (absolute value of the corresponding hazard ratio, odds ratio or regression coefficient) using repeated random split train/test sampling.
 #' In this function, we first use \link[rpart]{rpart} to identify optimal cutoff in each training set 
-#' and use this cutoff to dichotomize each quantile in the corresponding independent test set.
-#' The effect size for dichotomized quantile is estimated in the test set by fitting 
+#' and use this cutoff to dichotomize each predictor of interest in the corresponding independent test set.
+#' The effect size for dichotomized predictor is estimated in the test set by fitting 
 #' \link[survival]{coxph}, \link[stats]{glm} or \link[stats]{lm} to fit a Cox proportional hazard model,
 #' logistic regression, or linear regression
 #' for \link[survival]{Surv}, \link[base]{logical}, or \link[base]{numeric} endpoint.
@@ -31,19 +31,19 @@
 #' for a given \link[survival]{Surv}, \link[base]{logical}, or \link[base]{numeric} endpoint.  
 #' \link{optQp} is a wrapper of \link{summary.eval_dichotom}.
 #' 
-#' \item use \link{BBC_dichotom} to dichotomize continuous predictors and to obtain bootstrap-based optimism corrected effect size
+#' \item use \link{BBC_dichotom} to dichotomize predictors of interest and to obtain bootstrap-based optimism corrected effect size
 #' from Cox model, logistic regression, or linear regression.  
 #' Internally, \link{BBC_dichotom} calls \link{dichotom_int} to dichotomize each predictor in \code{contX} based on univariate model setting
 #' and \code{model_dichotom} to fit Cox proportional hazard model, logistic regression, or linear regression 
 #' for \link[survival]{Surv}, \link[base]{logical}, or \link[base]{numeric} endpoint
 #' with the dichotomized predictors from \link{dichotom_int}.
 #' 
-#' \item use \link{FRindex} to derive a scalar functional index as a predictor in the functional regression model
+#' \item use \link{FRindex} to derive a scalar functional regression index as a predictor in the functional regression model
 #' with any response supported by \CRANpkg{gam} package. 
 #' Function \link{FRindex} calls \link[mgcv]{gam} to fit a generalized additive model(GAM) to the training set
-#' and makes use of \link[mgcv]{plot.gam} to extract functional coefficient tabulated on the same grid as functional predictor(s).
+#' and makes use of \link[mgcv]{plot.gam} to extract functional coefficient tabulated on the same grid as functional predictor(s)
+#' in the training and test set (if the test set is provided).
 #' }
-#' 
 #'
 #' @references 
 #' Selection of optimal quantile protein biomarkers based on cell-level immunohistochemistry data,

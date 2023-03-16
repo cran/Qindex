@@ -7,11 +7,15 @@
 FRindex(
   trainData,
   testData,
+  trainArgs = attr(trainData, which = "xarg", exact = TRUE),
+  testArgs = if (!missing(testData)) attr(testData, which = "xarg", exact = TRUE) else
+    trainArgs,
   response,
   family,
   predictor = "Marker",
   log = TRUE,
-  knot.value = ceiling(ncol(trainData[[predictor]]) * 0.4),
+  knot_pct = 0.4,
+  knot.value = ceiling(ncol(trainData[[predictor]]) * knot_pct),
   ...
 )
 }
@@ -27,6 +31,10 @@ The number of values in the grid for tabulating functional predictor
 does not need to be the same as that number for the training data.
 If the functional predictor is the \link[stats]{quantile} function,
 then \code{testData} is preferably the returned object of \link{sampleQp}.}
+
+\item{trainArgs}{\link[base]{numeric} \link[base]{vector}}
+
+\item{testArgs}{\link[base]{numeric} \link[base]{vector}}
 
 \item{response}{\link[base]{language} of the response variable.
 All response variable types supported by \CRANpkg{gam} package are allowed,
@@ -44,9 +52,17 @@ equals to the number of quantiles used.}
 
 \item{log}{\link[base]{logical} scalar, whether to perform \link[base]{log} transformation on quantiles (default \code{FALSE}).}
 
-\item{knot.value}{\link[base]{integer} scalar, number of knots in \link[mgcv]{gam} function.
-See parameter \code{k} of \link[mgcv]{s}.
-Default is \eqn{40\%} of the column dimension of the \link[base]{matrix} column \code{predictor}}
+\item{knot_pct}{\link[base]{numeric} scalar,
+percentage of the column dimension of the \link[base]{matrix} column \code{predictor},
+to be used as \code{knot.value}.
+Default is \eqn{40\%}.
+If \code{knot.value} is provided by the end-user, then \code{knot_pct} is not used.}
+
+\item{knot.value}{\link[base]{integer} scalar, number of knots
+(i.e., parameter \code{k} in the spline smooth function \link[mgcv]{s})
+used in \link[mgcv]{gam} function.
+Default is the \link[base]{ceiling} of \code{knot_pct} of
+the column dimension of the \link[base]{matrix} column \code{predictor}.}
 
 \item{...}{additional parameters, currently not in use}
 }
@@ -73,11 +89,12 @@ pt = unique(Ki67$PATIENT_ID)
 length(pt) # 622
 train = subset(Ki67, PATIENT_ID \%in\% pt[1:500])
 test = subset(Ki67, PATIENT_ID \%in\% pt[501:622])
-train_Qps = sampleQp(data = train, subjID = 'PATIENT_ID', predictor = 'Marker', nQ = 101L)
-test_Qps = sampleQp(data = test, subjID = 'PATIENT_ID', predictor = 'Marker', nQ = 21L)
+train_Qps = sampleQp(data = train, subjID = 'PATIENT_ID', 
+  exclude = c('tissueID','inner_x','inner_y'), Qpredictor = 'Marker')
+test_Qps = sampleQp(data = test, subjID = 'PATIENT_ID',
+  exclude = c('tissueID','inner_x','inner_y'), Qpredictor = 'Marker')
 
 if (FALSE) { # masked to save time
-library(survival)
 FRQI = FRindex(trainData = train_Qps, testData = test_Qps, 
   response = Surv(RECFREESURV_MO, RECURRENCE), predictor = 'Marker', log = TRUE)
 set.seed(1)
