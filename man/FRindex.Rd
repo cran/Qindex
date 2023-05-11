@@ -2,126 +2,74 @@
 % Please edit documentation in R/FRindex.R
 \name{FRindex}
 \alias{FRindex}
-\title{Functional Regression Index (FRindex)}
+\title{Functional Regression Index Model}
 \usage{
-FRindex(
-  trainData,
-  testData,
-  trainArgs = attr(trainData, which = "xarg", exact = TRUE),
-  testArgs = if (!missing(testData)) attr(testData, which = "xarg", exact = TRUE) else
-    trainArgs,
-  response,
-  family,
-  predictor = "Marker",
-  log = TRUE,
-  knot_pct = 0.4,
-  knot.value = ceiling(ncol(trainData[[predictor]]) * knot_pct),
-  ...
-)
+FRindex(formula, data, xarg = as.numeric(colnames(X)), sign_prob = 0.5, ...)
 }
 \arguments{
-\item{trainData}{\link[base]{data.frame}, training data including
+\item{formula}{\link[stats]{formula}.
+Left-hand-side is the name of the response variable.
+Right-hand-side is the name of the tabulated \link[base]{matrix} functional predictor}
+
+\item{data}{\link[base]{data.frame}, including
 a response variable and a \link[base]{matrix} of tabulated functional predictor.
+Each row of such \link[base]{matrix} represents functional predictor values for each subject tabulated on a fine grid
+and each column corresponds to the same point on the same fine grid common for all subjects
 If the functional predictor is the \link[stats]{quantile} function,
-then \code{trainData} is preferably the returned object of \link{sampleQp}.}
+then \code{data} is preferably the returned object of \link{clusterQp}.}
 
-\item{testData}{\link[base]{data.frame}, test data including
-a response variable and a \link[base]{matrix} of tabulated functional predictor.
-The number of values in the grid for tabulating functional predictor
-does not need to be the same as that number for the training data.
-If the functional predictor is the \link[stats]{quantile} function,
-then \code{testData} is preferably the returned object of \link{sampleQp}.}
+\item{xarg}{\link[base]{numeric} \link[base]{vector},
+\eqn{x}-domain to be passed to \link{FR_gam}
+corresponding to the common grid on which the functional predictor is tabulated}
 
-\item{trainArgs}{\link[base]{numeric} \link[base]{vector}}
+\item{sign_prob}{\link[base]{numeric} scalar,
+the argument for selecting the nearest-even quantile in \code{xarg},
+which is used to define the \link[base]{sign} of the weight function \code{@FRwt} for \code{@FRi}.
+Default is \code{.5} corresponding to the nearest-even \link[stats]{median}}
 
-\item{testArgs}{\link[base]{numeric} \link[base]{vector}}
-
-\item{response}{\link[base]{language} of the response variable.
-All response variable types supported by \CRANpkg{gam} package are allowed,
-including continuous, binary or survival outcome.}
-
-\item{family}{\link[stats]{family} object specifying the distribution
-and link to use in \link[mgcv]{gam}}
-
-\item{predictor}{\link[base]{character} scalar,
-name of the \link[base]{matrix} column variable in \code{trainData} and \code{testData},
-with each row representing the tabulated, on a common grid, functional predictor values for each subject.
-If the functional predictor is the \link[stats]{quantile} function,
-then the number of columns in the \link[base]{matrix} column identified by \code{predictor}
-equals to the number of quantiles used.}
-
-\item{log}{\link[base]{logical} scalar, whether to perform \link[base]{log} transformation on quantiles (default \code{FALSE}).}
-
-\item{knot_pct}{\link[base]{numeric} scalar,
-percentage of the column dimension of the \link[base]{matrix} column \code{predictor},
-to be used as \code{knot.value}.
-Default is \eqn{40\%}.
-If \code{knot.value} is provided by the end-user, then \code{knot_pct} is not used.}
-
-\item{knot.value}{\link[base]{integer} scalar, number of knots
-(i.e., parameter \code{k} in the spline smooth function \link[mgcv]{s})
-used in \link[mgcv]{gam} function.
-Default is the \link[base]{ceiling} of \code{knot_pct} of
-the column dimension of the \link[base]{matrix} column \code{predictor}.}
-
-\item{...}{additional parameters, currently not in use}
+\item{...}{additional parameters of \link{FR_gam}}
 }
 \value{
-\link{FRindex} returns a \link[base]{data.frame} with the training data and FRindex,
-and the vectors of weights on the grid of the functional predictor
+\link{FRindex} returns an \linkS4class{FRindex} object.
 }
 \description{
-Computes a scalar functional index as a predictor in the functional regression model.
-The training data are used to estimate the functional coefficient by fitting functional regression model
-with any response supported by \CRANpkg{gam} package.
-The functional regression index is computed for training and (optional) test data
-using the functional coefficient from the model fitted to the training data.
+Fits functional regression model and computes functional indices based on functional predictors in the fitted model
 }
 \details{
-The Functional Regression Index (\link{FRindex}) is defined
-as the integral of the functional predictor multiplied by common weight function.
-The weight function is proportional to the functional coefficient in the functional
-regression model for a given response variable fitted to training data.
-The \link{FRindex} values computed for the training data and test data, if provided.
+Functional regression index for each subject is defined as a functional predictor in the functional regression model
+(integral of subject-specific functional predictor multiplied by the weight function common for all subjects).
+The weight function \code{@FRwt} is either equal or negated estimated functional coefficient in the functional regression model.
+The \link[base]{sign} of the weight function \code{@FRwt} is selected so that the resulting \code{@FRi}
+are positively associated with the values of functional predictor when \code{xarg} is equal to \code{sign_prob}.
 }
 \examples{
+
+library(survival)
+
 pt = unique(Ki67$PATIENT_ID)
 length(pt) # 622
-train = subset(Ki67, PATIENT_ID \%in\% pt[1:500])
-test = subset(Ki67, PATIENT_ID \%in\% pt[501:622])
-train_Qps = sampleQp(data = train, subjID = 'PATIENT_ID', 
-  exclude = c('tissueID','inner_x','inner_y'), Qpredictor = 'Marker')
-test_Qps = sampleQp(data = test, subjID = 'PATIENT_ID',
-  exclude = c('tissueID','inner_x','inner_y'), Qpredictor = 'Marker')
+# set.seed if needed
+train_pt = sample(pt, size = 500L)
+Ki67q = clusterQp(data = Ki67, exclude = c('tissueID','inner_x','inner_y'), contX = 'Marker')
+train_q = subset(Ki67q, PATIENT_ID \%in\% train_pt)
+test_q = subset(Ki67q, !(PATIENT_ID \%in\% train_pt))
+train_q$Marker = log1p(train_q$Marker)
+test_q$Marker = log1p(test_q$Marker)
 
-if (FALSE) { # masked to save time
-FRQI = FRindex(trainData = train_Qps, testData = test_Qps, 
-  response = Surv(RECFREESURV_MO, RECURRENCE), predictor = 'Marker', log = TRUE)
-set.seed(1)
-mod = BBC_dichotom(Surv(RECFREESURV_MO, RECURRENCE) ~ NodeSt + Tstage, data = FRQI$trainData, 
-  contX = 'FRindex_std', R = 100)
-}
+FRi = FRindex(Surv(RECFREESURV_MO, RECURRENCE) ~ Marker, data = train_q)
+FRi@FRi # functional regression index
+FRi@FRwt # functional regression weights
 
-if (FALSE) { # masked to save time
-FRindex(trainData = train_Qps, testData = test_Qps, response = RECURRENCE)
-FRindex(trainData = train_Qps, testData = test_Qps, response = RECFREESURV_MO)
+(FRi_test = predict.FRindex(FRi, newdata = test_q$Marker))
 
-set.seed(1)
-mod = BBC_dichotom(Surv(RECFREESURV_MO, RECURRENCE) ~ 1, data = FRQI$trainData, 
-  contX = 'FRindex_std', R = 200)
-summary(mod)
-names(attributes(mod))
-attr(mod, 'median_optimism')
-}
+FRi_train = predict.FRindex(FRi)
+stopifnot(identical(FRi@FRi, c(FRi_train)), 
+  identical(FRi@FRwt, attr(FRi_train, 'FRwt')))
 
-}
-\references{
-J. O. Ramsay, B. W. Silverman (2005). Functional Data Analysis, ed 2. Springer New York, NY
-\doi{10.1007/b98888}
+# set.seed if needed
+Ki67bbc_v2 = BBC_dichotom(Surv(RECFREESURV_MO, RECURRENCE) ~ NodeSt + Tstage, 
+  data = data.frame(train_q, FRi_std = std_IQR(FRi_train)), 
+  contX = 'FRi_std', R = 100L)
+summary(Ki67bbc_v2)
 
-Cui, E., Crainiceanu, C. M., & Leroux, A. (2021). Additive Functional Cox Model. Journal of Computational and Graphical Statistics. 2021;30(3):780-793.
-\doi{10.1080/10618600.2020.1853550}
-
-Gellar, J. E., Colantuoni, E., Needham, D. M., & Crainiceanu, C. M. (2015). Cox regression models with functional covariates for survival data. Statistical Modelling, 15(3), 256-278.
-\doi{10.1177/1471082X14565526}
 }

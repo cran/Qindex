@@ -2,56 +2,45 @@
 % Please edit documentation in R/BBC_dichotom.R
 \name{BBC_dichotom}
 \alias{BBC_dichotom}
-\title{Bootstrap Bias Correction for Dichotomization}
+\title{Bootstrap-based Optimism Corrected Optimal Dichotomization}
 \usage{
-BBC_dichotom(formula, data, contX, R = 200L, ...)
+BBC_dichotom(formula, data, contX, ...)
 }
 \arguments{
-\item{formula}{\link[stats]{formula}, with a \link[survival]{Surv}, \link[base]{logical},
-or \link[base]{numeric} endpoint
-and covariates to be included as is (i.e., without dichotomization).}
+\item{formula}{\link[stats]{formula}, left-hand-side being the endpoint and
+right-hand-side being the predictors \emph{in addition to} the \link[base]{numeric} predictor(s) to be dichotomized.
+If there is no additional predictors, use \code{y ~ 1}}
 
 \item{data}{\link[base]{data.frame}}
 
 \item{contX}{\link[base]{character} scalar,
-name of the \link[base]{matrix}
-containing the continuous predictor(s) to be dichotomized optimally}
+name of the \link[base]{matrix} column in \code{data}
+which contains the \link[base]{numeric} predictor(s) to be dichotomized}
 
-\item{R}{\link[base]{integer} scalar, number of bootstrap samples, see \link[boot]{boot}.
-Default \code{200L}.}
-
-\item{...}{additional parameters, currently not in use}
+\item{...}{additional parameters of \link[boot]{boot}, most importantly the number of bootstrap replicates \code{R}}
 }
 \value{
 \link{BBC_dichotom} returns a \link[base]{numeric} bootstrap-based bias adjusted
-coefficients of model, corresponding median optimism, \code{R} bootstrap resampling based thresholds,
-and a single apparent performance threshold
+coefficients of a \link[survival]{coxph}, \link[stats]{glm} or \link[stats]{lm} regression model,
+with \link[base]{attributes}
+\describe{
+\item{\code{attr(,'median_optimism')}}{the returned object from \link{boot_optim_dichotom}}
+\item{\code{attr(,'apparent_branch')}}{a \link[base]{list} of \link[base]{language} objects, branches of the apparent model}
+}
 }
 \description{
-Bootstrap-based optimism correction for dichotomizing selected continuous predictor(s)
+Bootstrap-based optimism correction for optimal dichotomization of selected \link[base]{numeric} predictor(s).
 }
 \details{
-The bootstrap optimism correction procedure
-is performed as described for a general model selection.
-First, \code{R} bootstrap samples are drawn with replacement from the main sample.
-In each bootstrap sample, the recursive partitioning tree model is used
-to establish an objective data-driven optimal cut-point for selected continuous predictors
-The cut-point from the current bootstrap sample is used to compute the effect size
-(log hazards ratio (HR), odds ratio (OR), or coefficient) for
-each dichotomized predictor in the current bootstrap sample (\strong{bootstrap performance})
-and in the main sample (\strong{test performance}),
-and the optimism in log OR/HR or coefficient estimation is computed as the difference between
-log OR/HR or coefficient for "Bootstrap performance" and for "Test performance".
-The median optimism estimate is computed as the median of optimism estimates over all bootstrap samples.
-The cutpoint for dichotomizing each selected continuous predictor is also established in the
-main sample and its "apparent performance" is computed as the log OR/HR or coefficient for
-dichotomized quantile in the univariate Cox models, logistic regression, or linear regression.
-Finally, the optimism-corrected performance estimate is computed by subtracting the median
-optimism estimate from the apparent performance estimate.
+The \emph{apparent performance estimate} are the coefficients
+of the regression model with dichotomized predictors (via \link{coef_dichotom})
+fitted to the entire data set.
+
+The \emph{optimism-corrected performance estimate} is computed by subtracting the
+median optimism estimate (via \link{boot_optim_dichotom}) from the apparent performance estimate.
 }
 \examples{
-# see ?FRindex
-# see ?eval_dichotom
+# see ?`Qindex-package`
 
 }
 \references{
