@@ -2,60 +2,73 @@
 #' @title Cluster-Specific Sample Quantiles
 #'  
 #' @description
-#' Obtain vectors of sample quantiles in each cluster of observations
+#' Obtain vectors of sample \link[stats]{quantile}s in each cluster of observations
+#' 
+#' @param formula \link[stats]{formula} passed to \link[stats]{aggregate.formula}.
+#' To calculate the cluster-specific statistics
+#' for response \eqn{y}, the user may use
+#' \describe{
+#' \item{`y ~ id`}{to retain only the cluster `id` in the returned value}
+#' \item{`y ~ id + x1 + x2`}{to retain the cluster `id` and cluster-specific variables \eqn{x_1} and \eqn{x_2} in the returned value}
+#' \item{`y ~ .`}{to retain all (supposedly cluster-specific) variables from `data` in the returned value}
+#' }
 #' 
 #' @param data \link[base]{data.frame}
 #' 
-#' @param contX \link[base]{character} scalar, 
-#' column name of the variable, for which the quantiles will be calculated
 #' 
 # @param FUN \link[base]{character} scalar, name of
 # \link[base]{function} for summary statistics, 
-# currently only supports \link[stats]{quantile} (\code{'quantile'} default) 
-# \link[np]{npquantile} (\code{'npquantile'}), or 
-# using \link[np]{npquantile} only if sample size is less or equal to 100 (\code{'npquantile100'}).
+# currently only supports \link[stats]{quantile} (`'quantile'` default) 
+# \link[np]{npquantile} (`'npquantile'`), or 
+# using \link[np]{npquantile} only if sample size is less or equal to 100 (`'npquantile100'`).
 #' 
-#' @param include (optional) \link[base]{character} \link[base]{vector}, 
-#' names of columns in \code{data} to be \link[stats]{aggregate}d by.
-#' Default values are all columns in \code{data} (except for \code{contX})
+#' @param exclude (optional) \link[stats]{formula} or \link[base]{character} \link[base]{vector}, 
+#' (supposedly non-cluster-specific) variables to be excluded from aggregation.
+#' To remove variables \eqn{z_1} and \eqn{z_2}, the user may use either
+#' \itemize{
+#' \item `exclude = c('z1', 'z2')`; or
+#' \item `exclude = . ~ . - z1 - z2`
+#' }
 #' 
-#' @param exclude (optional) \link[base]{character} \link[base]{vector}, 
-#' names of columns in \code{data} to be excluded from aggregation.
-#' Default value is \code{NULL}
 #' 
-#' @param from,to,by \link[base]{numeric} scalars,
+#' 
+#' @param from,to,by \link[base]{double} scalars,
 #' the starting, end, and increment values
-#' to specify a sequence (via \link[base]{seq.int}) of probabilities 
-#' \eqn{\bold{p} = (p_1,\cdots,p_N)'}
-#' for the sample quantiles \eqn{\bold{q} = (q_1,\cdots,q_N)'}
+#' to specify a \link[base]{seq}uence of probabilities 
+#' \eqn{p = (p_1,\cdots,p_N)'}
+#' for the sample \link[stats]{quantile}s \eqn{q = (q_1,\cdots,q_N)'}
 #' 
-#' @param type \link[base]{integer} scalar, type of quantile algorithm, see \link[stats]{quantile}
+#' @param type \link[base]{integer} scalar, type of \link[stats]{quantile} algorithm
 #' 
 #' @param ... additional parameters, currently not in use
 #' 
 #' @details 
-#' \link{clusterQp} calculates \eqn{N} sample quantiles 
-#' in each aggregated cluster of observations.
-#' The aggregated clusters are specified by parameters \code{include} and/or \code{exclude} via \link[stats]{aggregate}. 
-#' Sample quantiles \eqn{\bold{q}}, for all aggregated clusters, are stored in a \link[base]{matrix} with \eqn{N} columns.  
+#' Function [clusterQp()] calculates \eqn{N} sample \link[stats]{quantile}s 
+#' in each \link[stats]{aggregate}d cluster of observations.
+#' The aggregation is specified by parameters `formula` and `exclude`. 
 #' 
 #' @returns 
-#' \link{clusterQp} returns an aggregated \link[base]{data.frame}, 
-#' with a \link[base]{matrix} of sample quantiles named \code{contX}.
-#' The column names of the quantile \link[base]{matrix} are the probabilities \eqn{\bold{p}}.
-#'
+#' Function [clusterQp()] returns an \link[stats]{aggregate}d \link[base]{data.frame}.
+#' A \link[base]{double} \link[base]{matrix} of \eqn{N} columns is created to store  
+#' the sample \link[stats]{quantile}s \eqn{q} of each \link[stats]{aggregate}d cluster.
+#' The column names of this quantile \link[base]{matrix} are the probabilities \eqn{p}.
+#' 
 #' @examples 
-#' # see ?`Qindex-package`
+#' Ki67q = clusterQp(Marker ~ ., data = Ki67, exclude = c('tissueID','inner_x','inner_y'))
+#' tmp = clusterQp(Marker ~ ., data = Ki67, exclude = . ~ . - tissueID - inner_x - inner_y)
+#' # stopifnot(identical(Ki67q, tmp))
+#' # stopifnot(!anyDuplicated.default(Ki67q$subjID))
+#' head(Ki67q)
+#' sapply(Ki67q, FUN = class)
 #' 
 # @importFrom np npquantile
-#' @importFrom stats aggregate quantile
+#' @importFrom stats aggregate quantile update.formula terms.formula
 #' @export
 clusterQp <- function(
+    formula,
     data,
-    contX = 'Marker',
     # FUN = c('npquantile100', 'quantile', 'npquantile'),
-    include = names(data),
-    exclude = NULL,
+    exclude,
     from = .01, to = .99, by = .01,
     type = 7,
     ...
@@ -63,38 +76,46 @@ clusterQp <- function(
   
   # if (anyNA(data)) # okay to have NA in `data`
   
-  #FUN <- match.arg(FUN)
+  if (!is.symbol(X <- formula[[2L]])) stop('variable to be aggregated must be `symbol`')
   
-  probs <- seq.int(from = from, to = to, by = by)
-
-  fom <- eval(call('~', 
-                   as.symbol(contX), 
-                   Reduce(f = function(e1, e2) call('+', e1, e2), 
-                          x = lapply(setdiff(include, y = c(contX, exclude)), FUN = as.symbol))))
   # to create the formula for aggregate
-  # left-hand-side is `contX` (which is 'Marker' in our example)
-  # right-hand-side is all other columns in `data`, except for `contX`
-  # ... i.e., for current version of Ki67, they are 'PATIENT_ID' 'RECURRENCE' 'AGE_AT_DX' 'Tstage' 'NodeSt'
-  
+  fom <- if (missing(exclude) || !length(exclude)) {
+    formula 
+  } else {
+    newfom <- if (is.character(exclude) && !anyNA(exclude)) {
+      eval(call(
+        name = '~', 
+        as.symbol('.'),
+        Reduce(f = function(e1, e2) call('-', e1, e2), x = lapply(c('.', exclude), FUN = as.symbol))))
+    } else if (is.call(exclude) && exclude[[1L]] == '~') {
+      exclude
+    } else stop('illegal `exclude`')
+    update.formula(terms.formula(formula, data = data), new = newfom)
+  }
+
+  probs <- seq.int(from = from, to = to, by = by)
+  #FUN <- match.arg(FUN)
   ret <- #switch(FUN, quantile = {
-    aggregate(fom, data = data, FUN = quantile, probs = probs, type = type)
+    aggregate(fom, data = data, FUN = quantile, probs = probs, type = type, names = FALSE)
   #}, npquantile = {
   #  aggregate(fom, data = data, FUN = FUN, tau = probs)
   #}, npquantile100 = {
   #  aggregate(fom, data = data, FUN = function(x) {
   #    if (length(x) <= 100L) {
   #      npquantile(x, tau = probs)
-  #    } else quantile(x, probs = probs, type = type)
+  #    } else quantile(x, probs = probs, type = type, names = FALSE)
   #  })
   #})
   # when we use ?stats::aggregate and provide a `FUN` which returns a vector
   # we will get a generated new data column of class 'matrix'
-    
-  #attr(ret[[contX]], which = 'xarg') <- probs
-  colnames(ret[[contX]]) <- probs
+  
+  colnames(ret[[X]]) <- probs
   return(ret)
   
 }
+
+
+
 
 
 

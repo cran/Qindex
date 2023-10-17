@@ -11,7 +11,7 @@
 \item{\code{tissueID}}{\link[base]{factor}, TMA core identifier}
 \item{\code{RECURRENCE}}{\link[base]{integer}, recurrence indicator, 1 = Recurred, 0 = not Recurred}
 \item{\code{RECFREESURV_MO}}{\link[base]{integer}, recurrence-free survival time in months}
-\item{\code{Marker}}{\link[base]{numeric}, cell signal intensity of the protein immunofloerscence signal}
+\item{\code{Marker}}{\link[base]{double}, cell signal intensity of the protein immunofloerscence signal}
 \item{\code{inner_x}}{\link[base]{integer}, \eqn{x}-coordinate in the cell centroid in the TMA core}
 \item{\code{inner_y}}{\link[base]{integer}, \eqn{y}-coordinate in the cell centroid in the TMA core}
 \item{\code{AGE_AT_DX}}{\link[base]{integer}, age at diagnosis}
@@ -24,7 +24,7 @@
 \item{\code{RadjCHEMO}}{\link[base]{integer}, adjuvant chemo treatment, 0 = unknown,  1 = done, 2 = NOT done}
 \item{\code{RadjRAD}}{\link[base]{integer}, adjuvant radiation treatment, 0 = unknown,  1 = done, 2 = NOT done}
 \item{\code{HORM_4cat}}{\link[base]{integer}, hormone treatment, 0 = unknown, 1 = not indicated, 2 = done, 3 = recommended, but not done}
-\item{\code{MSI}}{\link[base]{numeric}, mean signal intensity (mean over all cells in the TMA core)}
+\item{\code{MSI}}{\link[base]{double}, mean signal intensity (mean over all cells in the TMA core)}
 }
 }
 \usage{

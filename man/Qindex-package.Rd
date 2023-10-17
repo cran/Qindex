@@ -5,67 +5,34 @@
 \alias{Qindex-package}
 \title{Continuous and Dichotomized Index Predictors Based on Distribution Quantiles}
 \description{
-Select optimal functional regression or dichotomized quantile predictors for survival/logistic/numeric outcome and
-perform optimistic bias correction for any optimally dichotomized \link[base]{numeric} predictor(s)
-}
-\details{
 Primary functions in this package are
 
 \describe{
 
-\item{\link{clusterQp}}{calculate user-selected sample quantiles in each cluster of observations.}
-
-\item{\link{optim_splitSample_dichotom}}{optimal predictor selection via dichotomizing split sample}
-
-\item{\link{BBC_dichotom}}{Bootstrap-based optimism correction for dichotomizing selected \link[base]{numeric} predictor(s)}
-
-\item{\link{FRindex}}{Functional regression index as a predictor in the functional regression model}
-
-}
-}
-\examples{
-
-library(survival)
-
-Ki67q = clusterQp(data = Ki67, exclude = c('tissueID','inner_x','inner_y'), contX = 'Marker')
-stopifnot(!anyDuplicated.default(Ki67q$subjID))
-head(Ki67q)
-sapply(Ki67q, FUN = class)
-
-# set.seed if needed
-Ki67c_toy = optim_splitSample_dichotom(Surv(RECFREESURV_MO, RECURRENCE) ~ Marker, data = Ki67q, 
-  nsplit = 5L, include = (highX > .15 & highX < .85), top = 2L)
-head(Ki67c_toy)   
-attr(Ki67c_toy, 'top') # under-the-hood statistics for the optimal predictors 
-\donttest{
-# slow
-Ki67c = optim_splitSample_dichotom(Surv(RECFREESURV_MO, RECURRENCE) ~ Marker, data = Ki67q, 
-  nsplit = 20L, include = (highX > .15 & highX < .85), top = 2L) 
+\item{\code{\link[=optimSplit_dichotom]{optimSplit_dichotom()}}}{
+optimal dichotomizing predictor(s) selection via dichotomizing split sample
+\strong{Still need? Select optimal functional regression or dichotomized quantile predictors for survival/logistic/numeric outcome}
 }
 
-# set.seed if needed
-Ki67bbc_toy = BBC_dichotom(Surv(RECFREESURV_MO, RECURRENCE) ~ NodeSt + Tstage, 
-  data = Ki67c_toy, contX = 'Marker', R = 100L)
-summary(Ki67bbc_toy)
-attr(Ki67bbc_toy, 'median_optimism')
-attr(attr(Ki67bbc_toy, 'median_optimism'), 'boot_branch')
-attr(Ki67bbc_toy, 'apparent_branch')
-\donttest{
-Ki67bbc = BBC_dichotom(Surv(RECFREESURV_MO, RECURRENCE) ~ NodeSt + Tstage, 
-  data = Ki67c, contX = 'Marker', R = 100L)
+\item{\code{\link[=BBC_dichotom]{BBC_dichotom()}}}{
+Bootstrap-based optimism correction for dichotomizing selected predictor(s)
+\strong{Still need? perform optimism correction for any optimal dichotomizing predictor(s)}
 }
 
-# see more examples in ?FRindex
+\item{\code{\link[=clusterQp]{clusterQp()}}}{calculate user-selected sample quantiles in each cluster of observations.}
 
+\item{\code{\link[=FRindex]{FRindex()}}}{Functional regression index as a predictor in the functional regression model}
+
+}
 }
 \references{
-Selection of optimal quantile protein biomarkers based on cell-level immunohistochemistry data,
+Selection of optimal quantile protein biomarkers based on cell-level immunohistochemistry data.
 Misung Yi, Tingting Zhan , Amy P. Peck, Jeffrey A. Hooke, Albert J. Kovatich, Craig D. Shriver,
 Hai Hu, Yunguang Sun, Hallgeir Rui and Inna Chervoneva.  Under revision
 
-Quantile index biomarkers based on single-cell expression data,
-Misung Yi, Tingting Zhan , Amy P. Peck, Jeffrey A. Hooke, Albert J. Kovatich, Craig D. Shriver,
+Quantile index biomarkers based on single-cell expression data.
+Misung Yi, Tingting Zhan, Amy P. Peck, Jeffrey A. Hooke, Albert J. Kovatich, Craig D. Shriver,
 Hai Hu, Yunguang Sun, Hallgeir Rui and Inna Chervoneva.
-Lab Invest, 2023 Apr 21;100158. \doi{10.1016/j.labinv.2023.100158}. Online ahead of print.
+Laboratory Investigation, 2023. \doi{10.1016/j.labinv.2023.100158}
 }
 \keyword{package}

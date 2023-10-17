@@ -5,10 +5,9 @@
 \title{Cluster-Specific Sample Quantiles}
 \usage{
 clusterQp(
+  formula,
   data,
-  contX = "Marker",
-  include = names(data),
-  exclude = NULL,
+  exclude,
   from = 0.01,
   to = 0.99,
   by = 0.01,
@@ -17,44 +16,55 @@ clusterQp(
 )
 }
 \arguments{
+\item{formula}{\link[stats]{formula} passed to \link[stats]{aggregate.formula}.
+To calculate the cluster-specific statistics
+for response \eqn{y}, the user may use
+\describe{
+\item{\code{y ~ id}}{to retain only the cluster \code{id} in the returned value}
+\item{\code{y ~ id + x1 + x2}}{to retain the cluster \code{id} and cluster-specific variables \eqn{x_1} and \eqn{x_2} in the returned value}
+\item{\code{y ~ .}}{to retain all (supposedly cluster-specific) variables from \code{data} in the returned value}
+}}
+
 \item{data}{\link[base]{data.frame}}
 
-\item{contX}{\link[base]{character} scalar,
-column name of the variable, for which the quantiles will be calculated}
+\item{exclude}{(optional) \link[stats]{formula} or \link[base]{character} \link[base]{vector},
+(supposedly non-cluster-specific) variables to be excluded from aggregation.
+To remove variables \eqn{z_1} and \eqn{z_2}, the user may use either
+\itemize{
+\item \code{exclude = c('z1', 'z2')}; or
+\item \code{exclude = . ~ . - z1 - z2}
+}}
 
-\item{include}{(optional) \link[base]{character} \link[base]{vector},
-names of columns in \code{data} to be \link[stats]{aggregate}d by.
-Default values are all columns in \code{data} (except for \code{contX})}
-
-\item{exclude}{(optional) \link[base]{character} \link[base]{vector},
-names of columns in \code{data} to be excluded from aggregation.
-Default value is \code{NULL}}
-
-\item{from, to, by}{\link[base]{numeric} scalars,
+\item{from, to, by}{\link[base]{double} scalars,
 the starting, end, and increment values
-to specify a sequence (via \link[base]{seq.int}) of probabilities
-\eqn{\bold{p} = (p_1,\cdots,p_N)'}
-for the sample quantiles \eqn{\bold{q} = (q_1,\cdots,q_N)'}}
+to specify a \link[base]{seq}uence of probabilities
+\eqn{p = (p_1,\cdots,p_N)'}
+for the sample \link[stats]{quantile}s \eqn{q = (q_1,\cdots,q_N)'}}
 
-\item{type}{\link[base]{integer} scalar, type of quantile algorithm, see \link[stats]{quantile}}
+\item{type}{\link[base]{integer} scalar, type of \link[stats]{quantile} algorithm}
 
 \item{...}{additional parameters, currently not in use}
 }
 \value{
-\link{clusterQp} returns an aggregated \link[base]{data.frame},
-with a \link[base]{matrix} of sample quantiles named \code{contX}.
-The column names of the quantile \link[base]{matrix} are the probabilities \eqn{\bold{p}}.
+Function \code{\link[=clusterQp]{clusterQp()}} returns an \link[stats]{aggregate}d \link[base]{data.frame}.
+A \link[base]{double} \link[base]{matrix} of \eqn{N} columns is created to store
+the sample \link[stats]{quantile}s \eqn{q} of each \link[stats]{aggregate}d cluster.
+The column names of this quantile \link[base]{matrix} are the probabilities \eqn{p}.
 }
 \description{
-Obtain vectors of sample quantiles in each cluster of observations
+Obtain vectors of sample \link[stats]{quantile}s in each cluster of observations
 }
 \details{
-\link{clusterQp} calculates \eqn{N} sample quantiles
-in each aggregated cluster of observations.
-The aggregated clusters are specified by parameters \code{include} and/or \code{exclude} via \link[stats]{aggregate}.
-Sample quantiles \eqn{\bold{q}}, for all aggregated clusters, are stored in a \link[base]{matrix} with \eqn{N} columns.
+Function \code{\link[=clusterQp]{clusterQp()}} calculates \eqn{N} sample \link[stats]{quantile}s
+in each \link[stats]{aggregate}d cluster of observations.
+The aggregation is specified by parameters \code{formula} and \code{exclude}.
 }
 \examples{
-# see ?`Qindex-package`
+Ki67q = clusterQp(Marker ~ ., data = Ki67, exclude = c('tissueID','inner_x','inner_y'))
+tmp = clusterQp(Marker ~ ., data = Ki67, exclude = . ~ . - tissueID - inner_x - inner_y)
+# stopifnot(identical(Ki67q, tmp))
+# stopifnot(!anyDuplicated.default(Ki67q$subjID))
+head(Ki67q)
+sapply(Ki67q, FUN = class)
 
 }

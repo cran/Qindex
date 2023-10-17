@@ -1,69 +1,239 @@
 
 
-#' @title Bootstrap-based Optimism Corrected Optimal Dichotomization 
+#' @title Bootstrap-based Optimism Correction for Dichotomization
 #' 
 #' @description 
-#' Bootstrap-based optimism correction for optimal dichotomization of selected \link[base]{numeric} predictor(s).
 #' 
-#' @param formula \link[stats]{formula}, left-hand-side being the endpoint and 
-#' right-hand-side being the predictors *in addition to* the \link[base]{numeric} predictor(s) to be dichotomized.
-#' If there is no additional predictors, use \code{y ~ 1}
+#' Functions explained in this documentation are,
 #' 
-#' @param data \link[base]{data.frame}
+#' \describe{
+#' 
+#' \item{`BBC_dichotom()`}{
+#' to obtain a multivariable regression model with 
+#' bootstrap-based optimism correction 
+#' on the dichotomized predictors.}
+#' 
+#' \item{`optimism_dichotom()`}{
+#' a helper function to compute the bootstrap-based optimism
+#' of the dichotomized predictors.}
+#' 
+#' \item{`coef_dichotom()`}{
+#' a helper function to obtain the 
+#' estimated multivariable regression coefficients of the dichotomized predictors.}
+#' 
+#' }
+#' 
+#' 
+#' @param formula \link[stats]{formula}, 
+#' left-hand-side being the response \eqn{y} and 
+#' right-hand-side being the predictors *in addition to* 
+#' the predictors to be `dichotom`ized.
+#' If there is no additional predictor, use `y ~ 1`
+#' 
+#' @param data \link[base]{data.frame}, containing the response \eqn{y} and predictors in `formula`, 
+#' as well as the predictors to be `dichotom`ized
 #'  
-#' @param contX \link[base]{character} scalar, 
-#' name of the \link[base]{matrix} column in \code{data}
-#' which contains the \link[base]{numeric} predictor(s) to be dichotomized
+#' @param dichotom one-sided \link[stats]{formula}
+#' of the set of predictors to be dichotomized.
+#' These predictors can be stored in `data` as 
+#' one or more \link[base]{numeric} columns and/or 
+#' one \link[base]{matrix} column
 #' 
-#' @param ... additional parameters of \link[boot]{boot}, most importantly the number of bootstrap replicates \code{R}
+#' @param X (for helper function [optimism_dichotom()]) 
+#' \link[base]{numeric} \link[base]{matrix} of \eqn{k} columns, 
+#' a set of \eqn{k} \link[base]{numeric} predictors
 #' 
-#' @details 
+#' @param dX (for helper function [coef_dichotom()]) 
+#' \link[base]{logical} \link[base]{matrix} of \eqn{k} columns, 
+#' a set of \eqn{k} dichotomized predictors
 #' 
-#' The *apparent performance estimate* are the coefficients 
-#' of the regression model with dichotomized predictors (via \link{coef_dichotom})
-#' fitted to the entire data set.
+#' @param R positive \link[base]{integer} scalar, 
+#' number of bootstrap replicates \eqn{R}, default `100L`
+#'  
+#' @param ... additional parameters, currently not in use
 #' 
-#' The *optimism-corrected performance estimate* is computed by subtracting the 
-#' median optimism estimate (via \link{boot_optim_dichotom}) from the apparent performance estimate.
+#' 
+#' 
+#' @details
+#' 
+#' Function [BBC_dichotom()] obtains a multivariable regression model with 
+#' bootstrap-based optimism correction on the dichotomized predictors.
+#' Specifically,
+#' 
+#' \enumerate{
+#' 
+#' \item Dichotomize the \eqn{k} predictors in the *entire data* (using function [m_rpartD()]).
+#' Fit a regression model to the entire data with the \eqn{k} dichotomized predictors 
+#' as well as the additional predictors, if any (using helper function [coef_dichotom()]).
+#' The estimated regression model is referred to as the *apparent performance*.
+#' 
+#' \item Obtain the bootstrap-based optimism based on \eqn{R} copies of bootstrap samples,
+#' using [optimism_dichotom].
+#' Calculate the \link[stats]{median} of bootstrap-based optimism, 
+#' specific to each of the dichotomized predictors.
+#' In future, we may expand the options to include the use of trimmed-mean 
+#' \link[base]{mean.default}`(, trim)`, etc.
+#' For now, let's refer to the median optimism as 
+#' the *optimism-correction* of the \eqn{k} dichotomized predictors.
+#' 
+#' }
+#' 
+#' Subtract the optimism-correction (in Step 2)
+#' from the apparent performance estimates (in Step 1), 
+#' *only for the \eqn{k} dichotomized predictors*. 
+#' The apparent performance estimates for the additional predictors, if any, 
+#' are not modified.
+#' The variance-covariance (\link[stats]{vcov}) estimates of the apparent performance 
+#' is not modified, for now.
+#' None of the other regression model diagnostics, such as 
+#' \link[stats]{resid}uals,
+#' \link[stats]{logLik}elihood,
+#' etc.,
+#' are modified neither, for now.
+#' The coefficient-only, partially-modified regression model is referred to as  
+#' the *optimism-corrected performance*.
+#' 
+#' 
+#' 
+#' @section Details of Helper Function `optimism_dichotom()`:
+#' 
+#' Function [optimism_dichotom] computes the bootstrap-based optimism
+#' of the dichotomized predictors.
+#' First, \eqn{R} bootstrap samples are generated,
+#' for which the end-user may specify a \link[base]{Random} seed, if needed.
+#' Then, 
+#' 
+#' \enumerate{
+#' 
+#' \item From each of the \eqn{R} bootstrap samples, 
+#' obtain the dichotomizing branches for the \eqn{k} predictors to be dichotomized,
+#' using function [m_rpartD()]
+#' 
+#' \item Dichotomize the \eqn{k} predictors in each *bootstrap sample* 
+#' using the respective dichotomizing branches from Step 1.
+#' The regression coefficients estimate for the \eqn{k} dichotomized predictors
+#' (using helper function [coef_dichotom()])
+#' is referred to as the *bootstrap performance estimate*.
+#' 
+#' \item Dichotomize the \eqn{k} predictors in the *entire data*
+#' using each of the bootstrap dichotomizing branches from Step 1.
+#' The regression coefficients estimate for the \eqn{k} dichotomized predictors
+#' (using helper function [coef_dichotom()])
+#' is referred to as the *test performance estimate*.
+#' 
+#' }
+#' 
+#' The difference between the bootstrap and test performance estimates, 
+#' based on each of the \eqn{R} bootstrap samples,
+#' are referred to as the bootstrap-based *optimism* or optimistic bias.
+#' 
+#' 
+#' 
+#' 
+#' @section Details of Helper Function `coef_dichotom()`:
+#' 
+#' Function [coef_dichotom] obtains the 
+#' estimated multivariable regression coefficients of the dichotomized predictors.
+#' A Cox proportional hazards (\link[survival]{coxph}) regression for \link[survival]{Surv} response, 
+#' a logistic (\link[stats]{glm}) regression for \link[base]{logical} response, 
+#' or a linear (\link[stats]{lm}) regression for \link[stats]{gaussian} response
+#' is performed with 
+#' \itemize{
+#' \item the dichotomous \link[base]{logical} predictors, given as the columns of `dX`, and
+#' \item the additional predictors specified in `formula`
+#' }
+#' 
+#' When `dX` has duplicated columns, 
+#' the regression model is fitted using the *unique* columns of `dX` and the
+#' additional predictors in `formula`.
+#' The returned coefficient estimates repeat the corresponding estimates of the unique columns of `dX`.
+#' 
 #' 
 #' @returns 
 #' 
-#' \link{BBC_dichotom} returns a \link[base]{numeric} bootstrap-based bias adjusted  
-#' coefficients of a \link[survival]{coxph}, \link[stats]{glm} or \link[stats]{lm} regression model,
-#' with \link[base]{attributes}
+#' Function [BBC_dichotom] returns a 
+#' \link[survival]{coxph}, \link[stats]{glm} or \link[stats]{lm} regression model,
+#' with \link[base]{attributes},
 #' \describe{
-#' \item{\code{attr(,'median_optimism')}}{the returned object from \link{boot_optim_dichotom}}
-#' \item{\code{attr(,'apparent_branch')}}{a \link[base]{list} of \link[base]{language} objects, branches of the apparent model}
+#' \item{`attr(,'optimism')`}{the returned object from [optimism_dichotom]}
+#' \item{`attr(,'apparent_cutoff')`}{a \link[base]{double} \link[base]{vector}, 
+#' cutoff thresholds for the \eqn{k} predictors in the apparent model}
 #' } 
 #' 
-#' @references 
+#' @section Returns of Helper Functions: 
+#' 
+#' Helper function [optimism_dichotom()] returns an \eqn{R\times k} \link[base]{double} \link[base]{matrix} of 
+#' bootstrap-based optimism, 
+#' with \link[base]{attributes}
+#' \describe{
+#' \item{`attr(,'cutoff')`}{an \eqn{R\times k} \link[base]{double} \link[base]{matrix}, 
+#' the \eqn{R} copies of bootstrap cutoff thresholds for the \eqn{k} predictors.
+#' See attribute `'cutoff'` of function [m_rpartD()]}
+#' }
+#'
+#' Helper function [coef_dichotom()] returns a \link[base]{double} \link[base]{vector} of the
+#' coefficients of the dichotomized predictors, with \link[base]{attributes}
+#' \describe{
+#' \item{`attr(,'model')`}{the \link[survival]{coxph}, \link[stats]{glm} or \link[stats]{lm} regression model}
+#' }
+#' 
+#'
+#' 
+#' @section References on Helper Function `optimism_dichotom()`:
+#' 
 #' Ewout W. Steyerberg (2009) Clinical Prediction Models.
 #' \doi{10.1007/978-0-387-77244-8}
 #' 
-#' Frank E. Harrell Jr., Kerry L. Lee, Daniel B. Mark. (1996) Multivariable prognostic models: issues in developing models, evaluating
+#' Frank E. Harrell Jr., Kerry L. Lee, Daniel B. Mark. (1996) 
+#' Multivariable prognostic models: issues in developing models, evaluating
 #' assumptions and adequacy, and measuring and reducing errors.
 #' \doi{10.1002/(SICI)1097-0258(19960229)15:4<361::AID-SIM168>3.0.CO;2-4} 
 #' 
-#' @examples 
-#' # see ?`Qindex-package`
 #' 
+#' 
+#' @examples 
+#' library(survival)
+#' data(flchain, package = 'survival') # see more details from ?survival::flchain
+#' head(flchain2 <- within.data.frame(flchain, expr = {
+#'   mgus = as.logical(mgus)
+#' }))
+#' dim(flchain3 <- subset(flchain2, futime > 0)) # required by ?rpart::rpart
+#' dim(flchain_Circulatory <- subset(flchain3, chapter == 'Circulatory'))
+#' 
+#' m1 = BBC_dichotom(Surv(futime, death) ~ age + sex + mgus, 
+#'  data = flchain_Circulatory, dichotom = ~ kappa + lambda)
+#' summary(m1)
+#' attr(attr(m1, 'optimism'), 'cutoff')
+#' attr(m1, 'apparent_cutoff')
+#' 
+#' @importFrom matrixStats colMedians
+#' @importFrom stats model.frame.default na.pass
+#' @name BBC_dichotom
 #' @export
-BBC_dichotom <- function(formula, data, contX, ...) {
+BBC_dichotom <- function(formula, dichotom, data, ...) {
+  if (!inherits(formula, what = 'formula') || length(formula) != 3L) stop('`formula` must be 2-sided formula')
+  if (!inherits(dichotom, what = 'formula') || length(dichotom) != 2L) stop('`dichotom` must be 1-sided formula')
+    
+  y <- eval(formula[[2L]], envir = data)
   
-  if (!inherits(formula, 'formula') || length(formula) == 2L) stop('`formula` must be 2-sided formula')
+  X <- as.matrix.data.frame(model.frame.default(formula = dichotom, data = data, na.action = na.pass))
+  if (!is.numeric(X) || !is.matrix(X)) stop('`dichotom` must only contain numeric predictors')
   
-  if (!is.matrix(data[[contX]])) {
-    data[[contX]] <- matrix(data[[contX]], ncol = 1L, dimnames = list(NULL, contX))
-  }
+  # Apparent performance 
+  mfun <- m_rpartD(y = y, X = X)
+  apprent_dX <- mfun(X)
+  apparent_cf <- coef_dichotom(formula = formula, data = data, dX = apprent_dX) 
   
-  apparent_cf <- coef_dichotom(formula = formula, data = data, contX = contX) # Apparent performance 
+  # Bootstrap-based optimism
+  optimism <- optimism_dichotom(formula = formula, X = X, data = data, ...) 
   
-  median_optimism <- boot_optim_dichotom(formula = formula, data = data, contX = contX, ...) # Bootstrap
-
+  medianOpt <- colMedians(optimism, useNames = TRUE, na.rm = TRUE)
+  ## later: trimmed-mean ?
+  
   ret <- attr(apparent_cf, which = 'model', exact = TRUE)
   ncf <- length(ret$coefficients)
-  q <- dim(data[[contX]])[2L] # number of predictors to be dichotomized
-  ret$coefficients[(ncf-q+1L):ncf] <- ret$coefficients[(ncf-q+1L):ncf] - median_optimism
+  q <- length(apparent_cf) # number of predictors to be dichotomized
+  ret$coefficients[(ncf-q+1L):ncf] <- ret$coefficients[(ncf-q+1L):ncf] - medianOpt
   ## Subtract the mean optimism estimates from the apparent performance 
   ## estimates to obtain the optimism-corrected performance estimates.
   
@@ -71,12 +241,16 @@ BBC_dichotom <- function(formula, data, contX, ...) {
   # so that the Wald-type z-statistics and p-values can be automatically calculated using ?summary
   # We need to update
   # ret$var
-  # we still need cov(ret$coefficients, median_optimism)
+  # we still need cov(ret$coefficients, medianOpt)
   # !!!! for now, just leave the variance/covariance as it was !!!
   # end of Tingting
   
-  attr(ret, which = 'median_optimism') <- median_optimism
-  attr(ret, which = 'apparent_branch') <- attr(apparent_cf, which = 'branch', exact = TRUE)
+  attr(ret, which = 'optimism') <- optimism
+  attr(ret, which = 'apparent_cutoff') <- attr(apprent_dX, which = 'cutoff', exact = TRUE)
+  
+  attr(ret, which = 'median_optimism') <- c('Deprecated attribute \'median_optimism\'. Use attr(,\'optimism\') instead')
+  attr(ret, which = 'apparent_branch') <- c('Deprecated attribute \'apparent_branch\'. Use attr(,\'apparent_cutoff\') instead')
+  
   class(ret) <- c('BBC_dichotom', class(ret))
   return(ret)
   
@@ -90,107 +264,98 @@ BBC_dichotom <- function(formula, data, contX, ...) {
 
 
 
-#' @title Bootstrap-based Optimism Correction
-#' 
-#' @description 
-#' Computes optimism correction for effect sizes corresponding to dichotomized \link[base]{numeric} predictor(s).
-#' 
-#' @param formula \link[stats]{formula}, left-hand-side being the endpoint and 
-#' right-hand-side being the predictors *in addition to* the \link[base]{numeric} predictor(s) to be dichotomized.
-#' If there is no additional predictors, use \code{y ~ 1}
-#' 
-#' @param data \link[base]{data.frame}
-#'  
-#' @param contX \link[base]{character} scalar, 
-#' name of the \link[base]{matrix} column in \code{data}
-#' which contains the \link[base]{numeric} predictor(s) to be dichotomized
-#' 
-#' @param ... additional parameters of \link[boot]{boot}, most importantly the number of bootstrap replicates \code{R}
-#' 
-#' @details 
-#' 
-#' \eqn{R} bootstrap samples are generated. For each bootstrap sample, 
-#' dichotomizing branches for the \link[base]{numeric} predictors 
-#' are optimized in the bootstrap sample using \link{m_rpartD}
-#' 
-#' \describe{
-#' 
-#' \item{Bootstrap performance}{Regression coefficients for the dichotomized predictors are estimated 
-#' in the bootstrap sample via \link{coef_dichotom}}
-#' 
-#' \item{Test performance}{Regression coefficients for the dichotomized predictors are estimated  
-#' in the entire data set via \link{coef_dichotom}}. The \link[base]{numeric} predictors in the entire data set are dichotomized 
-#' using dichotomizing branches determined in the bootstrap sample.
-#' 
-#' }
-#' 
-#' The *optimism or optimistic bias* is estimated by the difference between regression coefficients 
-#' from bootstrap performance and test performance, for each of the \eqn{R} bootstrap sample.
-#' 
-#' The *median optimism estimate* is the median of optimism estimates over all \eqn{R} bootstrap samples. 
-#' 
-#' @returns 
-#' 
-#' \link{boot_optim_dichotom} returns a \link[base]{numeric} \link[base]{vector} of 
-#' median optimism estimate, with \link[base]{attributes}
-#' \describe{
-#' \item{\code{attr(,'boot_branch')}}{a \link[base]{list} of length \eqn{R}, each element of which is 
-#' a \link[base]{list} of \link[base]{language} objects (see attribute \code{'branch'} of \link{m_rpartD})}
-#' }
-#' 
-#' @references 
-#' Ewout W. Steyerberg (2009) Clinical Prediction Models.
-#' \doi{10.1007/978-0-387-77244-8}
-#' 
-#' Frank E. Harrell Jr., Kerry L. Lee, Daniel B. Mark. (1996) Multivariable prognostic models: issues in developing models, evaluating
-#' assumptions and adequacy, and measuring and reducing errors.
-#' \doi{10.1002/(SICI)1097-0258(19960229)15:4<361::AID-SIM168>3.0.CO;2-4} 
-#' 
-#' @examples 
-#' # see ?`Qindex-package`
-#' 
-#' @importFrom matrixStats colMedians
+
+#' @rdname BBC_dichotom
 #' @export
-boot_optim_dichotom <- function(formula, data, contX, ...) {
+optimism_dichotom <- function(formula, X, data, R = 100L, ...) {
   
-  yval <- eval(formula[[2L]], envir = data)
+  y <- eval(formula[[2L]], envir = data)
   
-  bootID <- bootIDX(N = length(yval), ...)
+  bts <- bootIDX(n = length(y), R = R) # \eqn{R} copies of 'integer' vectors
   
-  boot_dich <- lapply(bootID, FUN = function(i) {
-    m_rpartD(y = yval[i], X = data[[contX]][i, , drop = FALSE])
-  })
-  boot_branch <- lapply(boot_dich, FUN = attr, which = 'branch', exact = TRUE)
+  parts <- lapply(bts, FUN = function(i) {
+    m_rpartD(y = y[i], X = X[i, , drop = FALSE])
+  }) # \eqn{R} copies of dichotomizing rules
   
-  boot_cf <- lapply(seq_along(bootID), FUN = function(i) {
-    coef_dichotom(formula = formula, data = data[bootID[[i]], ], dX = boot_dich[[i]])
-  })
+  boot_dX <- lapply(seq_len(R), FUN = function(i) { # (i = 1L)
+    parts[[i]](X[bts[[i]], , drop = FALSE])
+  }) # \eqn{R} dichotomizing rules applied to \eqn{R} bootstrap samples, respectively
   
-  test_cf <- lapply(boot_branch, FUN = function(b) { # (b = boot_branch[[1L]])
-    dX <- do.call(cbind, args = lapply(seq_along(b), FUN = function(ib) { # (ib = 1L)
-      cl <- b[[ib]]
-      cl[[2L]] <- quote(data[[contX]][,ib])
-      eval(cl)
-    }))
-    dimnames(dX) <- dimnames(data[[contX]])
-    coef_dichotom(formula = formula, data = data, dX = dX)
-  })
+  boot_cf <- lapply(seq_len(R), FUN = function(i) { # (i = 1L)
+    coef_dichotom(formula = formula, data = data[bts[[i]], ], dX = boot_dX[[i]])
+  }) # regression coef of each `boot_dX` based on each bootstrap sample
+  # stopifnot(!anyNA(boot_cf, recursive = TRUE))
+  
+  test_dX <- lapply(parts, FUN = function(fn) fn(X)) 
+  # \eqn{R} dichotomizing rules applied to complete data
+  
+  test_cf <- lapply(test_dX, FUN = function(i) {
+    coef_dichotom(formula = formula, data = data, dX = i)
+  }) # regression coef of each `test_dX` based on complete data
+  # stopifnot(!anyNA(test_cf, recursive = TRUE))
   
   # optimistically biased matrix of coefficients
   # .mapply(FUN = `-`, dots = list(boot_cf, test_cf), MoreArgs = NULL) # slower
-  M_optim <- do.call(rbind, args = boot_cf) - do.call(rbind, args = test_cf) 
+  ret <- do.call(rbind, args = boot_cf) - do.call(rbind, args = test_cf) 
   
-  ## later: maybe trimmed mean may also work instead of median.
-  ret <- colMedians(M_optim, useNames = TRUE, na.rm = TRUE)
-  #dim(M_optim)
-  #do.call(rbind, args = test_cf)
-  # cov(A, B) - var(B)
+  attr(ret, which = 'boot_branch') <- c('Deprecated attribute \'boot_branch\'.  Use attr(,\'cutoff\') instead')
+  attr(ret, which = 'cutoff') <- do.call(rbind, args = lapply(boot_dX, FUN = attr, which = 'cutoff', exact = TRUE))
   
-  attr(ret, which = 'boot_branch') <- boot_branch
   return(ret)
   
 }
 
+
+
+
+
+
+
+
+
+#' @importFrom stats lm glm binomial
+#' @importFrom survival coxph
+#' @importFrom utils tail
+#' @rdname BBC_dichotom
+#' @export
+coef_dichotom <- function(formula, dX, data) {
+  
+  y <- eval(formula[[2L]], envir = data)
+  if (anyNA(y)) stop('do not allow missingness in the response, for now')
+  
+  # identify duplicated columns in `dX`
+  dX_orig <- dX
+  Xc <- asplit(dX, MARGIN = 2L) # list of the columns of `dX`
+  dupX <- duplicated.default(Xc)
+  if (any(dupX)) {
+    ids <- match(x = Xc, table = Xc[!dupX])
+    dX <- do.call(cbind, args = Xc[!dupX])
+  }
+  
+  nms <- make.names(dimnames(dX)[[2L]])
+  data[nms] <- dX
+  
+  fom <- formula
+  for (i in nms) fom[[3]] <- call('+', fom[[3]], as.symbol(i))
+  
+  suppressWarnings(mod <- if (inherits(y, what = 'Surv')) {
+    coxph(formula = fom, data = data)
+  } else if (is.logical(y) || all(y %in% c(0, 1))) {
+    glm(formula = fom, data = data, family = binomial(link = 'logit'))
+  } else {
+    lm(formula = fom, data = data)
+  })
+  
+  #if (anyNA(mod$coefficients)) {
+  #  print(mod)
+  #  warning('still could happen')
+  #}
+  coef_ <- tail(mod$coefficients, n = length(nms))
+  if (any(dupX)) coef_ <- coef_[ids]
+  attr(coef_, which = 'model') <- mod
+  return(coef_)
+  
+}
 
 
 
