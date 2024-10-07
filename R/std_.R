@@ -15,10 +15,10 @@
 #' @return 
 #' 
 #' ## Standardize using \link[stats]{median} and \link[stats]{IQR}
-#' Function [std_IQR()] returns a \link[base]{numeric} \link[base]{vector} of the same length as `x`.
+#' Function [std_IQR] returns a \link[base]{numeric} \link[base]{vector} of the same length as `x`.
 #' 
 #' ## Standardize using \link[stats]{median} and \link[stats]{mad}
-#' Function [std_mad()] returns a \link[base]{numeric} \link[base]{vector} of the same length as `x`.
+#' Function [std_mad] returns a \link[base]{numeric} \link[base]{vector} of the same length as `x`.
 #' 
 #' @examples
 #' std_IQR(rnorm(20))

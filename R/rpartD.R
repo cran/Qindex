@@ -38,7 +38,7 @@
 #' 
 #' ## Dichotomize Single Predictor
 #' 
-#' Function [rpartD()] dichotomizes one predictor in the following steps, 
+#' Function [rpartD] dichotomizes one predictor in the following steps, 
 #' 
 #' \enumerate{
 #' 
@@ -78,7 +78,7 @@
 #' 
 #' ## Dichotomize Single Predictor
 #' 
-#' Function [rpartD()] returns a \link[base]{function}, 
+#' Function [rpartD] returns a \link[base]{function}, 
 #' with a \link[base]{double} \link[base]{vector} parameter `newx`.
 #' The returned value of `rpartD(y,x)(newx)` is a 
 #' \link[base]{logical} \link[base]{vector}
@@ -98,7 +98,7 @@
 #' with(cu.summary, rpartD(y = Price, x = Mileage, check_degeneracy = FALSE))
 #' (foo = with(cu.summary, rpartD(y = Price, x = Mileage)))
 #' foo(rnorm(10, mean = 24.5))
-#' 
+#' @keywords internal
 #' @importFrom rpart rpart
 #' @name rpartD
 #' @export
@@ -125,15 +125,16 @@ rpartD <- function(
   
   node1[[3L]] <- tree$splits[1L, 4L] # threshold, in case `labels` are truncated due to `digits`
   
-  ret <- alist(newx = )
-  ret[[2L]] <- if (check_degeneracy) call(
+  fun <- alist(newx = )
+  fun[[2L]] <- if (check_degeneracy) call(
     name = '{',
     call('<-', quote(ret), call('(', node1)),
     quote(if (all(ret, na.rm = TRUE) || !any(ret, na.rm = TRUE)) warning('Dichotomized value is all-0 or all-1')),
     call('<-', call('attr', quote(ret), which = 'cutoff'), node1[[3L]]),
+    call('<-', call('attr', quote(ret), which = 'text'), deparse1(node1[c(1L, 3L)])),
     quote(return(ret))
   ) else node1
-  return(as.function.default(ret))
+  return(as.function.default(fun))
 
 }
 
@@ -153,16 +154,16 @@ rpartD <- function(
 #' 
 #' ## Dichotomize Multiple Predictors   
 #' 
-#' Function [m_rpartD()] dichotomizes 
+#' Function [m_rpartD] dichotomizes 
 #' each predictor `X[,i]` based on the response \eqn{y} 
-#' using function [rpartD()].
+#' using function [rpartD].
 #' Applying the multiple dichotomizing rules to a new set of predictors `newX`,
 #' \itemize{
 #' \item {A \link[base]{warning} message is produced, 
 #' if at least one of the dichotomized predictors is all-`TRUE` or all-`FALSE`.}
 #' \item {We do not check if more than one of the dichotomized predictors
 #' are \link[base]{identical} to each other.
-#' We take care of this situation in helper function [coef_dichotom()]}
+#' We take care of this situation in helper function [coef_dichotom]}
 #' }
 #' 
 #' 
@@ -170,7 +171,7 @@ rpartD <- function(
 #' 
 #' ## Dichotomize Multiple Predictors
 #' 
-#' Function [m_rpartD()] returns a \link[base]{function},
+#' Function [m_rpartD] returns a \link[base]{function},
 #' with a \link[base]{double} \link[base]{matrix} parameter `newX`. 
 #' The argument for `newX` must have 
 #' the same number of columns and the same column names as 
@@ -191,7 +192,6 @@ rpartD <- function(
 #' nrow(stagec) # 146
 #' (foo = with(stagec[1:100,], m_rpartD(y = Surv(pgtime, pgstat), X = cbind(age, g2, gleason))))
 #' foo(as.matrix(stagec[-(1:100), c('age', 'g2', 'gleason')]))
-#' 
 #' @rdname rpartD
 #' @export
 m_rpartD <- function(y, X, check_degeneracy = TRUE, ...) {
@@ -205,7 +205,7 @@ m_rpartD <- function(y, X, check_degeneracy = TRUE, ...) {
   
   calls <- lapply(sq, FUN = function(i) {
     cl <- fbodies[[i]]
-    cl[[2L]] <- call('[', quote(newX), TRUE, i)
+    cl[[2L]] <- call('[', quote(newX), alist(a =)[[1L]], i)
     call('(', cl) # easier to read for human
   })
   

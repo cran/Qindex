@@ -44,7 +44,7 @@ Each column of \eqn{X} is one predictor.}
 \value{
 \subsection{Dichotomize Single Predictor}{
 
-Function \code{\link[=rpartD]{rpartD()}} returns a \link[base]{function},
+Function \link{rpartD} returns a \link[base]{function},
 with a \link[base]{double} \link[base]{vector} parameter \code{newx}.
 The returned value of \code{rpartD(y,x)(newx)} is a
 \link[base]{logical} \link[base]{vector}
@@ -56,7 +56,7 @@ with \link[base]{attributes}
 
 \subsection{Dichotomize Multiple Predictors}{
 
-Function \code{\link[=m_rpartD]{m_rpartD()}} returns a \link[base]{function},
+Function \link{m_rpartD} returns a \link[base]{function},
 with a \link[base]{double} \link[base]{matrix} parameter \code{newX}.
 The argument for \code{newX} must have
 the same number of columns and the same column names as
@@ -79,7 +79,7 @@ using recursive partitioning and regression tree \link[rpart]{rpart}.
 \details{
 \subsection{Dichotomize Single Predictor}{
 
-Function \code{\link[=rpartD]{rpartD()}} dichotomizes one predictor in the following steps,
+Function \link{rpartD} dichotomizes one predictor in the following steps,
 
 \enumerate{
 
@@ -117,16 +117,16 @@ by returning a \code{NA_real_} regression coefficient estimate.
 
 \subsection{Dichotomize Multiple Predictors}{
 
-Function \code{\link[=m_rpartD]{m_rpartD()}} dichotomizes
+Function \link{m_rpartD} dichotomizes
 each predictor \code{X[,i]} based on the response \eqn{y}
-using function \code{\link[=rpartD]{rpartD()}}.
+using function \link{rpartD}.
 Applying the multiple dichotomizing rules to a new set of predictors \code{newX},
 \itemize{
 \item {A \link[base]{warning} message is produced,
 if at least one of the dichotomized predictors is all-\code{TRUE} or all-\code{FALSE}.}
 \item {We do not check if more than one of the dichotomized predictors
 are \link[base]{identical} to each other.
-We take care of this situation in helper function \code{\link[=coef_dichotom]{coef_dichotom()}}}
+We take care of this situation in helper function \link{coef_dichotom}}
 }
 }
 }
@@ -139,12 +139,11 @@ data(cu.summary, package = 'rpart') # see more details from ?rpart::cu.summary
 with(cu.summary, rpartD(y = Price, x = Mileage, check_degeneracy = FALSE))
 (foo = with(cu.summary, rpartD(y = Price, x = Mileage)))
 foo(rnorm(10, mean = 24.5))
-
 ## Dichotomize Multiple Predictors
 library(survival)
 data(stagec, package = 'rpart') # see more details from ?rpart::stagec
 nrow(stagec) # 146
 (foo = with(stagec[1:100,], m_rpartD(y = Surv(pgtime, pgstat), X = cbind(age, g2, gleason))))
 foo(as.matrix(stagec[-(1:100), c('age', 'g2', 'gleason')]))
-
 }
+\keyword{internal}

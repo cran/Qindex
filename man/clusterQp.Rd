@@ -7,7 +7,7 @@
 clusterQp(
   formula,
   data,
-  exclude,
+  f_sum_ = mean,
   from = 0.01,
   to = 0.99,
   by = 0.01,
@@ -16,55 +16,68 @@ clusterQp(
 )
 }
 \arguments{
-\item{formula}{\link[stats]{formula} passed to \link[stats]{aggregate.formula}.
-To calculate the cluster-specific statistics
-for response \eqn{y}, the user may use
+\item{formula}{\link[stats]{formula}
+to specify the response \eqn{y}, cluster(s) \eqn{c}'s,
+cluster-specific covariate(s) \eqn{x}'s to be retained, and
+cluster-specific covariate(s) \eqn{z}'s to be removed
+from \code{data}, e.g.,
 \describe{
-\item{\code{y ~ id}}{to retain only the cluster \code{id} in the returned value}
-\item{\code{y ~ id + x1 + x2}}{to retain the cluster \code{id} and cluster-specific variables \eqn{x_1} and \eqn{x_2} in the returned value}
-\item{\code{y ~ .}}{to retain all (supposedly cluster-specific) variables from \code{data} in the returned value}
+\item{\code{y ~ 1 | c1}}{cluster \eqn{c_1}, without cluster-specific covariate}
+\item{\code{y ~ 1 | c1/c2}}{cluster \eqn{c_1}, and cluster \eqn{c_2} nested in \eqn{c_1}, without cluster-specific covariate}
+\item{\code{y ~ x1 + x2 | c1}}{cluster \eqn{c_1}, and cluster-specific covariates \eqn{x_1} and \eqn{x_2}}
+\item{\code{y ~ . | c1}}{cluster \eqn{c_1}, and all (supposedly cluster-specific) covariates from \code{data}}
+\item{\code{y ~ . - z1 - z2 | c1}}{cluster \eqn{c_1}, and all (supposedly cluster-specific) covariates, except for \eqn{z_1} and \eqn{z_2}, from \code{data}}
 }}
 
 \item{data}{\link[base]{data.frame}}
 
-\item{exclude}{(optional) \link[stats]{formula} or \link[base]{character} \link[base]{vector},
-(supposedly non-cluster-specific) variables to be excluded from aggregation.
-To remove variables \eqn{z_1} and \eqn{z_2}, the user may use either
-\itemize{
-\item \code{exclude = c('z1', 'z2')}; or
-\item \code{exclude = . ~ . - z1 - z2}
-}}
+\item{f_sum_}{\link[base]{function} to summarize the sample \link[stats]{quantile}s from
+lower-level cluster \eqn{c_2} (if present),
+such as \link[base]{mean} (default), \link[stats]{median}, \link[base]{max}, \link[base]{min}, etc.}
 
 \item{from, to, by}{\link[base]{double} scalars,
 the starting, end, and increment values
-to specify a \link[base]{seq}uence of probabilities
-\eqn{p = (p_1,\cdots,p_N)'}
-for the sample \link[stats]{quantile}s \eqn{q = (q_1,\cdots,q_N)'}}
+of a probability \link[base]{seq}uence
+\eqn{\mathbf{p} = (p_1,\cdots,p_N)'}
+\emph{shared by all clusters},
+where the cluster-specific sample \link[stats]{quantile}s
+\eqn{\mathbf{q} = (q_1,\cdots,q_N)'} of response \eqn{y} are calculated}
 
-\item{type}{\link[base]{integer} scalar, type of \link[stats]{quantile} algorithm}
+\item{type}{\link[base]{integer} scalar, see argument \code{type} of function \link[stats]{quantile}}
 
 \item{...}{additional parameters, currently not in use}
 }
 \value{
-Function \code{\link[=clusterQp]{clusterQp()}} returns an \link[stats]{aggregate}d \link[base]{data.frame}.
-A \link[base]{double} \link[base]{matrix} of \eqn{N} columns is created to store
-the sample \link[stats]{quantile}s \eqn{q} of each \link[stats]{aggregate}d cluster.
-The column names of this quantile \link[base]{matrix} are the probabilities \eqn{p}.
+Function \link{clusterQp} returns an \link[stats]{aggregate}d \link[base]{data.frame},
+in which
+
+\itemize{
+
+\item {cluster(s) \eqn{c}'s and cluster-specific covariate(s) \eqn{x}'s
+are retained.
+\itemize{
+\item {If the input \code{formula} takes form of \code{y ~ . | c1} or \code{y ~ . - z1 | c1},
+then all covariates (except for \eqn{z_1}) are considered cluster-specific thus are all retained;}
+\item {\strong{Currently}, only the highest cluster \eqn{c_1} is retained.
+Sample quantiles from lower-level clusters are summarized using \code{f_sum_}.}
 }
-\description{
-Obtain vectors of sample \link[stats]{quantile}s in each cluster of observations
 }
-\details{
-Function \code{\link[=clusterQp]{clusterQp()}} calculates \eqn{N} sample \link[stats]{quantile}s
-in each \link[stats]{aggregate}d cluster of observations.
-The aggregation is specified by parameters \code{formula} and \code{exclude}.
+
+\item {response \eqn{y} is removed; instead,  a \link[base]{double} \link[base]{matrix} of \eqn{N} columns stores
+the cluster-specific sample \link[stats]{quantile}s \eqn{\mathbf{q}} of the response \eqn{y}.
+This \link[base]{matrix}
+\itemize{
+\item {is named after the \link[base]{parse}d \link[base]{expression} of response \eqn{y} in \code{formula};}
+\item {\link[base]{colnames} are the probabilities \eqn{\mathbf{p}}, for the ease of subsequent programming.}
 }
-\examples{
-Ki67q = clusterQp(Marker ~ ., data = Ki67, exclude = c('tissueID','inner_x','inner_y'))
-tmp = clusterQp(Marker ~ ., data = Ki67, exclude = . ~ . - tissueID - inner_x - inner_y)
-# stopifnot(identical(Ki67q, tmp))
-# stopifnot(!anyDuplicated.default(Ki67q$subjID))
-head(Ki67q)
-sapply(Ki67q, FUN = class)
+}
 
 }
+}
+\description{
+Sample \link[stats]{quantile}s in each cluster of observations.
+}
+\examples{
+# see ?`Qindex-package` for examples
+}
+\keyword{internal}
