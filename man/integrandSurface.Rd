@@ -12,10 +12,9 @@ integrandSurface(
   proj_beta = TRUE,
   n = 501L,
   newid = seq_len(min(50L, .row_names_info(newdata, type = 2L))),
-  ylim = range(X, newX),
-  xcol = "dodgerblue",
-  ycol = "deeppink",
-  zcol = "darkolivegreen",
+  qlim = range(X, newX),
+  axis_col = c("dodgerblue", "deeppink", "darkolivegreen"),
+  beta_col = "purple",
   surface_col = c("white", "lightgreen")
 )
 }
@@ -28,8 +27,8 @@ the response \eqn{y^{\text{new}}} and
 the \link[base]{double} \link[base]{matrix} of
 functional predictor values \eqn{X^{\text{new}}}
 of the \emph{test set}.
-The test functional predictor values \eqn{X^{\text{new}}} are
-tabulated on the same \eqn{x}-grid as
+The predictor \eqn{X^{\text{new}}} are
+tabulated on the same \eqn{p}-grid as
 the training functional predictor values \eqn{X}.
 If missing, the training set will be used.}
 
@@ -52,14 +51,17 @@ row indices of \code{newdata} to be visualized.
 Default \code{1:2}, i.e., the first two test subjects.
 Use \code{newid = NULL} to disable visualization of \code{newdata}.}
 
-\item{ylim}{\link[base]{length}-2 \link[base]{double} \link[base]{vector},
-range on \eqn{y}-axis. Default is the range of \eqn{X} and \eqn{X^{\text{new}}} combined.}
+\item{qlim}{\link[base]{length}-2 \link[base]{double} \link[base]{vector},
+range on \eqn{q}-axis. Default is the range of \eqn{X} and \eqn{X^{\text{new}}} combined.}
 
-\item{xcol, ycol, zcol}{\link[base]{character} scalars,
-colors of the \eqn{x}-, \eqn{y}- and \eqn{z}-axes}
+\item{axis_col}{\link[base]{length}-3 \link[base]{character} \link[base]{vector},
+colors of the \eqn{(p,q,s)} axes}
+
+\item{beta_col}{\link[base]{character} scalar, color
+of \eqn{\hat{\beta(p)}}}
 
 \item{surface_col}{\link[base]{length}-2 \link[base]{character} \link[base]{vector},
-color of the integrand surface(s), for lowest and highest \eqn{z} values}
+color of the integrand surface(s), for lowest and highest surface values}
 }
 \value{
 Function \link{integrandSurface} returns a pretty \CRANpkg{htmlwidgets} created by \strong{R} package \CRANpkg{plotly}
@@ -85,7 +87,7 @@ if one and only one \emph{linear} \linkS4class{Qindex} model is provided in inpu
 }
 }
 \description{
-A fancy interactive \CRANpkg{htmlwidgets} of the \link[graphics]{persp}ective plot for
+An interactive \CRANpkg{htmlwidgets} of the \link[graphics]{persp}ective plot for
 \linkS4class{Qindex} model(s)
 using package \CRANpkg{plotly}.
 }

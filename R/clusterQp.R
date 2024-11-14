@@ -1,11 +1,17 @@
 
+# best explanation!!!
+# ~ 1 | c1/c2 
+# https://stats.stackexchange.com/questions/228800/crossed-vs-nested-random-effects-how-do-they-differ-and-how-are-they-specified
+
+
+
 #' @title Cluster-Specific Sample Quantiles
 #'  
 #' @description
 #' Sample \link[stats]{quantile}s in each cluster of observations.
 #' 
-#' @param formula \link[stats]{formula}
-#' to specify the response \eqn{y}, cluster(s) \eqn{c}'s, 
+#' @param formula \link[stats]{formula},
+#' including response \eqn{y}, cluster(s) \eqn{c}'s, 
 #' cluster-specific covariate(s) \eqn{x}'s to be retained, and
 #' cluster-specific covariate(s) \eqn{z}'s to be removed 
 #' from `data`, e.g.,
@@ -29,19 +35,19 @@
 #' 
 #' @param f_sum_ \link[base]{function} to summarize the sample \link[stats]{quantile}s from 
 #' lower-level cluster \eqn{c_2} (if present), 
-#' such as \link[base]{mean} (default), \link[stats]{median}, \link[base]{max}, \link[base]{min}, etc.
+#' such as \link[base]{mean.default} (default), \link[stats]{median.default}, \link[base]{max}, \link[base]{min}, etc.
 #' 
-#' @param from,to,by \link[base]{double} scalars,
-#' the starting, end, and increment values
-#' of a probability \link[base]{seq}uence
-#' \eqn{\mathbf{p} = (p_1,\cdots,p_N)'}
-#' *shared by all clusters*,
+#' @param probs \link[base]{double} \link[base]{vector},
+#' probabilities \eqn{\mathbf{p} = (p_1,\cdots,p_N)'}
+#' shared across all clusters,
 #' where the cluster-specific sample \link[stats]{quantile}s 
-#' \eqn{\mathbf{q} = (q_1,\cdots,q_N)'} of response \eqn{y} are calculated
+# \eqn{\mathbf{q} = (q_1,\cdots,q_N)'} 
+#' of response \eqn{y} are calculated.
+#' Default `seq(.01, .99, by = .01)`
 #' 
-#' @param type \link[base]{integer} scalar, see argument `type` of function \link[stats]{quantile}
+# @param type \link[base]{integer} scalar, see argument `type` of function \link[stats]{quantile}
 #' 
-#' @param ... additional parameters, currently not in use
+#' @param ... additional parameters of function \link[stats]{quantile}
 #' 
 # @details 
 # Function [clusterQp] calculates \eqn{N} sample \link[stats]{quantile}s 
@@ -53,18 +59,18 @@
 #' 
 #' \itemize{
 #' 
-#' \item {cluster(s) \eqn{c}'s and cluster-specific covariate(s) \eqn{x}'s 
+#' \item {the highest cluster \eqn{c_1} and cluster-specific covariate(s) \eqn{x}'s 
 #' are retained. 
 #' \itemize{
 #' \item {If the input `formula` takes form of `y ~ . | c1` or `y ~ . - z1 | c1`,
-#' then all covariates (except for \eqn{z_1}) are considered cluster-specific thus are all retained;}
-#' \item {**Currently**, only the highest cluster \eqn{c_1} is retained. 
-#' Sample quantiles from lower-level clusters are summarized using `f_sum_`.}
+#' then all covariates (except for \eqn{z_1}) are considered cluster-specific;}
+#' \item {Sample quantiles from lower-level clusters (e.g., \eqn{c_2}) are point-wise summarized using function `f_sum_`.}
 #' }
 #' }
 #' 
 #' \item {response \eqn{y} is removed; instead,  a \link[base]{double} \link[base]{matrix} of \eqn{N} columns stores
-#' the cluster-specific sample \link[stats]{quantile}s \eqn{\mathbf{q}} of the response \eqn{y}.
+#' the cluster-specific sample \link[stats]{quantile}s. 
+# \eqn{\mathbf{q}} of the response \eqn{y}.
 #' This \link[base]{matrix}
 #' \itemize{
 #' \item {is named after the \link[base]{parse}d \link[base]{expression} of response \eqn{y} in `formula`;}
@@ -78,15 +84,15 @@
 #' @examples 
 #' # see ?`Qindex-package` for examples
 # @importFrom np npquantile
-#' @keywords internal
+# @keywords internal
 #' @importFrom stats aggregate quantile update.formula terms.formula
 #' @export
 clusterQp <- function(
     formula, data,
     # FUN = c('npquantile100', 'quantile', 'npquantile'),
-    f_sum_ = mean, # max, min # old variable name `aggregateQp`
-    from = .01, to = .99, by = .01,
-    type = 7,
+    f_sum_ = mean.default, # max, min, etc.
+    probs = seq.int(from = .01, to = .99, by = .01),
+    #type = 7,
     ...
 ) {
   
@@ -97,74 +103,83 @@ clusterQp <- function(
   if (formula[[3L]][[1L]] != '|') stop('`formula` must have format of y ~ x1 | c1 or y ~ x1 | c1/c2')
   
   # dealing with cluster(s)
-  cls_call <- formula[[3L]][[3L]]
+  cls <- formula[[3L]][[3L]]
   
   # dealing with `x`
   fomx_new <- Reduce(
     f = function(e1, e2) call('-', e1, e2), 
     init = quote(.),
-    x = lapply(c(as.character(y), all.vars(cls_call)), FUN = as.symbol)
+    x = lapply(c(as.character(y), all.vars(cls)), FUN = as.symbol)
   )
   fomx <- update.formula(
     old = terms.formula(call('~', formula[[3L]][[2L]]), data = data), 
     new = call('~', fomx_new))
   
-  probs <- seq.int(from = from, to = to, by = by)
+  #probs <- seq.int(from = from, to = to, by = by)
   
-  if (is.symbol(cls_call)) { # 1-level clustering
+  if (is.symbol(cls)) { # 1-level clustering
+    
+    if (is.factor(data[[cls]])) data[[cls]] <- factor(data[[cls]]) # remove empty levels
     
     aggr_fom <- eval(call(name = '~', y,
-                     call('+', fomx[[2L]], cls_call)))
+                     call('+', fomx[[2L]], cls)))
     
     # ?stats:::aggregate.formula
-    ret <- aggregate(aggr_fom, data = data, FUN = quantile, probs = probs, type = type, names = FALSE)
+    ret <- aggregate(aggr_fom, data = data, FUN = quantile, probs = probs, ..., names = FALSE)
+    dimnames(ret[[y]]) <- list(NULL, probs)
     
   } else {
     
-    if (cls_call[[1L]] != '/') stop('multi-level clustering must be specified as `| c1/c2`')
-    if (!is.symbol(cls1 <- cls_call[[2L]]) || !is.symbol(cls2 <- cls_call[[3L]])) stop('2-level clustering must be all-symbol, e.g. `| c1/c2`')
+    if (cls[[1L]] != '/') stop('multi-level clustering must be specified as `| c1/c2`')
+    if (!is.symbol(cls1 <- cls[[2L]]) || !is.symbol(cls2 <- cls[[3L]])) stop('2-level clustering must be all-symbol, e.g. `| c1/c2`')
+    
+    if (is.factor(data[[cls1]])) data[[cls1]] <- factor(data[[cls1]])
+    if (is.factor(data[[cls2]])) data[[cls2]] <- factor(data[[cls2]])
     
     aggr_fom <- eval(call(name = '~', y, Reduce(
       f = function(e1, e2) call('+', e1, e2), 
-      x = as.list(cls_call)[-1L], 
+      x = as.list(cls)[-1L], 
       init = fomx[[2L]]
     )))
     
-    ret0 <- aggregate(aggr_fom, data = data, FUN = quantile, probs = probs, type = type, names = FALSE)
+    ret0 <- aggregate(aggr_fom, data = data, FUN = quantile, probs = probs, ..., names = FALSE)
+    dimnames(ret0[[y]]) <- list(NULL, probs)
     
-    tmp1 <- split.data.frame(ret0, f = ret0[[cls1]])
-    # stopifnot(length(unique(ret0[[cls1]])) == length(tmp))
+    tmp1 <- split.data.frame(ret0, f = eval(call('~', cls1)))
+    # stopifnot(length(unique(ret0[[cls1]])) == length(tmp1))
     
     tmp2 <- lapply(tmp1, FUN = function(tmp) {
       # (tmp = tmp1[[1L]])
-      lapply(all.vars(fomx), FUN = function(x) if (!all(duplicated(tmp[[x]])[-1L])) stop(sQuote(x), ' not unique per ', sQuote(cls1)))
+      # lapply(all.vars(fomx), FUN = function(x) if (!all(duplicated(tmp[[x]])[-1L])) stop(sQuote(x), ' not unique per ', sQuote(cls1)))
       out0 <- tmp
       out0[[cls2]] <- out0[[y]] <- NULL
       out <- unique.data.frame(out0)
       if (nrow(out) != 1) stop('wont happen')
       out[[y]] <- array(
         data = apply(tmp[[y]], MARGIN = 2L, FUN = f_sum_, simplify = TRUE),
-        dim = c(1L, dim(tmp[[y]])[2L]))
+        dim = c(1L, dim(tmp[[y]])[2L]),
+        dimnames = list(NULL, probs))
       return(out)
     })
     
     ret <- do.call(what = rbind.data.frame, args = c(tmp2, list(make.row.names = FALSE)))
     
+    mult2 <- lapply(tmp1, FUN = function(tmp) {
+      if (nrow(tmp[[y]]) == 1L) return(invisible())
+      return(tmp[[y]])
+    })
+    
+    attr(ret, which = 'mult2') <- mult2[lengths(mult2) > 0L]
+    
   }
   
-  dimnames(ret[[y]]) <- list(
-    if (is.symbol(cls_call)) as.character(eval(cls_call, envir = ret)) else stop('will be quick fix'),
-    probs
-  )
-  
+  #dimnames(ret[[y]]) <- list(NULL, probs)
   return(ret)
   
 }
 
 
 
-# best explanation!!!
-# ~ 1 | c1/c2 
-# https://stats.stackexchange.com/questions/228800/crossed-vs-nested-random-effects-how-do-they-differ-and-how-are-they-specified
+
 
 

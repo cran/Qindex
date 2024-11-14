@@ -81,9 +81,9 @@
 #' dim(flchain_Circulatory <- subset(flchain3, chapter == 'Circulatory'))
 #' 
 #' m1 = BBC_dichotom(Surv(futime, death) ~ age + sex + mgus ~ kappa + lambda, 
-#'  data = flchain_Circulatory)
+#'  data = flchain_Circulatory, R = 1e2L)
 #' summary(m1)
-#' attr(attr(m1, 'optimism'), 'cutoff')
+#' matrixStats::colMedians(BBC_cutoff(m1)) # median bootstrap cutoff
 #' attr(m1, 'apparent_cutoff')
 #' 
 #' @importFrom matrixStats colMedians
@@ -110,6 +110,7 @@ BBC_dichotom <- function(formula, data, ...) {
   
   # Bootstrap-based optimism
   optimism <- optimism_dichotom(fom = fom, X = X, data = data, ...) 
+  # attr(optimism, 'cutoff') # 'bootstrap cutoff'
   
   medianOpt <- colMedians(optimism, useNames = TRUE, na.rm = TRUE)
   ## later: trimmed-mean ?
@@ -315,3 +316,28 @@ coef_dichotom <- function(fom, X., data) {
   return(coef_)
   
 }
+
+
+
+# to beef up later!!
+#' @title Bootstrap Cutoff
+#' 
+#' @description
+#' ..
+#' 
+#' @param object returned value from function [BBC_dichotom]
+#' 
+#' @details
+#' we use the output of [BBC_dichotom].
+#' 
+#' but actually this works on the output of [optimism_dichotom].
+#' 
+#' @returns 
+#' Function [BBC_cutoff] returns a \link[base]{matrix} of bootstrap cutoffs.
+#' 
+#' @keywords internal
+#' @export
+BBC_cutoff <- function(object) {
+  attr(attr(object, which = 'optimism', exact = TRUE), which = 'cutoff', exact = TRUE)
+}
+

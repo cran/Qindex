@@ -14,10 +14,10 @@ std_mad(x, na.rm = TRUE, ...)
 \item{x}{\link[base]{numeric} \link[base]{vector}}
 
 \item{na.rm}{\link[base]{logical} scalar,
-see \link[stats]{quantile}, \link[stats]{median} and \link[stats]{mad}.
+see functions \link[stats]{quantile}, \link[stats]{median} and \link[stats]{mad}.
 Default \code{TRUE}}
 
-\item{...}{additional parameters of \link[stats]{quantile} and/or \link[stats]{mad}}
+\item{...}{additional parameters of functions \link[stats]{quantile} and/or \link[stats]{mad}}
 }
 \value{
 \subsection{Standardize using \link[stats]{median} and \link[stats]{IQR}}{
@@ -31,7 +31,7 @@ Function \link{std_mad} returns a \link[base]{numeric} \link[base]{vector} of th
 }
 }
 \description{
-Alternative standardize using \link[stats]{median}, \link[stats]{IQR} and \link[stats]{mad}.
+Alternative standardization using \link[stats]{median}, \link[stats]{IQR} and \link[stats]{mad}.
 }
 \examples{
 std_IQR(rnorm(20))

@@ -10,7 +10,7 @@
 #' the response \eqn{y^{\text{new}}} and
 #' the \link[base]{double} \link[base]{matrix} of 
 #' functional predictor values \eqn{X^{\text{new}}}
-#' of the test set, tabulated on the same \eqn{x}-grid as the training set \eqn{X}.
+#' of the test set, tabulated on the same \eqn{p}-grid as the training set \eqn{X}.
 #' If missing, the training set `object@gam$data` will be used.
 #' 
 #' @param ... additional parameters, currently not in use.

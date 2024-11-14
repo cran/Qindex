@@ -22,15 +22,14 @@ Generate a series of \link[boot]{boot}strap indices.
 \details{
 Function \link{bootid} generates the same bootstrap indices as
 those generated from the default options of function \link[boot]{boot}
-(i.e., \code{sim = 'ordinary'} and \code{m = 0}),
-given the same \link[base]{Random} seed.
+(i.e., \code{sim = 'ordinary'} and \code{m = 0}).
 }
 \examples{
-set.seed(1345); boot::boot(data = 1:10, statistic = function(data, ind) ind, R = 3L)[['t']]
-set.seed(1345); bootid(10L, R = 3L) # same copies of indices
-
+set.seed(1345); (bt1 = boot::boot(data = 1:10, statistic = function(data, ind) ind, R = 3L)[['t']])
+set.seed(1345); (bt2 = do.call(rbind, bootid(10L, R = 3L)))
+stopifnot(identical(bt1, bt2))
 }
 \seealso{
-\code{boot:::index.array} and \code{boot:::ordinary.array}.
+Function \link{bootid} is inspired by functions \code{boot:::index.array} and \code{boot:::ordinary.array}.
 }
 \keyword{internal}

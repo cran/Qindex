@@ -159,9 +159,9 @@ dim(flchain3 <- subset(flchain2, futime > 0)) # required by ?rpart::rpart
 dim(flchain_Circulatory <- subset(flchain3, chapter == 'Circulatory'))
 
 m1 = BBC_dichotom(Surv(futime, death) ~ age + sex + mgus ~ kappa + lambda, 
- data = flchain_Circulatory)
+ data = flchain_Circulatory, R = 1e2L)
 summary(m1)
-attr(attr(m1, 'optimism'), 'cutoff')
+matrixStats::colMedians(BBC_cutoff(m1)) # median bootstrap cutoff
 attr(m1, 'apparent_cutoff')
 
 }

@@ -16,15 +16,16 @@
 #' @details
 #' Function [bootid] generates the same bootstrap indices as 
 #' those generated from the default options of function \link[boot]{boot} 
-#' (i.e., `sim = 'ordinary'` and `m = 0`), 
-#' given the same \link[base]{Random} seed.  
+#' (i.e., `sim = 'ordinary'` and `m = 0`).
 #' 
-#' @seealso `boot:::index.array` and `boot:::ordinary.array`.
+#' @seealso 
+#' 
+#' Function [bootid] is inspired by functions `boot:::index.array` and `boot:::ordinary.array`.
 #' 
 #' @examples
-#' set.seed(1345); boot::boot(data = 1:10, statistic = function(data, ind) ind, R = 3L)[['t']]
-#' set.seed(1345); bootid(10L, R = 3L) # same copies of indices
-#' 
+#' set.seed(1345); (bt1 = boot::boot(data = 1:10, statistic = function(data, ind) ind, R = 3L)[['t']])
+#' set.seed(1345); (bt2 = do.call(rbind, bootid(10L, R = 3L)))
+#' stopifnot(identical(bt1, bt2))
 #' @keywords internal
 #' @export
 bootid <- function(n, R) {

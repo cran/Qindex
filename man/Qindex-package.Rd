@@ -34,14 +34,12 @@ Ki67q_1 = Ki67q[-id, , drop = FALSE] # test set
 (fr = Qindex(PFS ~ marker, data = Ki67q_0))
 stopifnot(all.equal.numeric(c(fr), predict(fr)))
 \donttest{integrandSurface(fr)}
-fr_1 = predict(fr, newdata = Ki67q_1)
 \donttest{integrandSurface(fr, newdata = Ki67q_1)}
 
 ## Step 2b: Non-Linear Sign-Adjusted Quantile Indices
 (nlfr = Qindex(PFS ~ marker, data = Ki67q_0, nonlinear = TRUE))
 stopifnot(all.equal.numeric(c(nlfr), predict(nlfr)))
 \donttest{integrandSurface(nlfr)}
-nlfr_1 = predict(nlfr, newdata = Ki67q_1)
 \donttest{integrandSurface(nlfr, newdata = Ki67q_1)}
 
 ## view linear and non-linear sign-adjusted quantile indices together
@@ -64,8 +62,8 @@ Ki67q_0a = within.data.frame(Ki67q_0, expr = {
   optS = std_IQR(marker[,'0.27'])
 })
 Ki67q_1a = within.data.frame(Ki67q_1, expr = {
-  FR = std_IQR(fr_1)
-  nlFR = std_IQR(nlfr_1)
+  FR = std_IQR(predict(fr, newdata = Ki67q_1))
+  nlFR = std_IQR(predict(nlfr, newdata = Ki67q_1))
   optS = std_IQR(marker[,'0.27']) 
 })
 # `optS`: use the best quantile but discard the cutoff identified by [optimSplit_dichotom]
@@ -81,8 +79,19 @@ summary(BBC_dichotom(PFS ~ NodeSt + Tstage ~ FR, data = Ki67q_1a))
 # set.seed if necessary
 summary(BBC_dichotom(PFS ~ NodeSt + Tstage ~ nlFR, data = Ki67q_1a))
 # set.seed if necessary
-summary(BBC_dichotom(PFS ~ NodeSt + Tstage ~ optS, data = Ki67q_1a))
+summary(BBC_dichotom(PFS ~ NodeSt + Tstage ~ optS, data = Ki67q_1a)) # statistically rigorous 
+
+# Option 1
+summary(BBC_dichotom(PFS ~ NodeSt + Tstage ~ FR, data = Ki67q_1a))
+
+# Option 2:
+summary(tmp <- BBC_dichotom(PFS ~ NodeSt + Tstage ~ FR, data = Ki67q_0a))
+#coxph(PFS ~ NodeSt + Tstage + I(FR > attr(tmp, 'apparent_cutoff')), data = Ki67q_1a)
+coxph(PFS ~ NodeSt + Tstage + I(FR > matrixStats::colMedians(BBC_cutoff(tmp))), data = Ki67q_1a)
 }
+
+# Option 1 and 2 are also applicable to `nlFR` and `optS`
+
 }
 \references{
 \emph{Selection of optimal quantile protein biomarkers based on cell-level immunohistochemistry data}.

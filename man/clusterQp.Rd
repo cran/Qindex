@@ -7,17 +7,14 @@
 clusterQp(
   formula,
   data,
-  f_sum_ = mean,
-  from = 0.01,
-  to = 0.99,
-  by = 0.01,
-  type = 7,
+  f_sum_ = mean.default,
+  probs = seq.int(from = 0.01, to = 0.99, by = 0.01),
   ...
 )
 }
 \arguments{
-\item{formula}{\link[stats]{formula}
-to specify the response \eqn{y}, cluster(s) \eqn{c}'s,
+\item{formula}{\link[stats]{formula},
+including response \eqn{y}, cluster(s) \eqn{c}'s,
 cluster-specific covariate(s) \eqn{x}'s to be retained, and
 cluster-specific covariate(s) \eqn{z}'s to be removed
 from \code{data}, e.g.,
@@ -33,19 +30,16 @@ from \code{data}, e.g.,
 
 \item{f_sum_}{\link[base]{function} to summarize the sample \link[stats]{quantile}s from
 lower-level cluster \eqn{c_2} (if present),
-such as \link[base]{mean} (default), \link[stats]{median}, \link[base]{max}, \link[base]{min}, etc.}
+such as \link[base]{mean.default} (default), \link[stats]{median.default}, \link[base]{max}, \link[base]{min}, etc.}
 
-\item{from, to, by}{\link[base]{double} scalars,
-the starting, end, and increment values
-of a probability \link[base]{seq}uence
-\eqn{\mathbf{p} = (p_1,\cdots,p_N)'}
-\emph{shared by all clusters},
+\item{probs}{\link[base]{double} \link[base]{vector},
+probabilities \eqn{\mathbf{p} = (p_1,\cdots,p_N)'}
+shared across all clusters,
 where the cluster-specific sample \link[stats]{quantile}s
-\eqn{\mathbf{q} = (q_1,\cdots,q_N)'} of response \eqn{y} are calculated}
+of response \eqn{y} are calculated.
+Default \code{seq(.01, .99, by = .01)}}
 
-\item{type}{\link[base]{integer} scalar, see argument \code{type} of function \link[stats]{quantile}}
-
-\item{...}{additional parameters, currently not in use}
+\item{...}{additional parameters of function \link[stats]{quantile}}
 }
 \value{
 Function \link{clusterQp} returns an \link[stats]{aggregate}d \link[base]{data.frame},
@@ -53,18 +47,17 @@ in which
 
 \itemize{
 
-\item {cluster(s) \eqn{c}'s and cluster-specific covariate(s) \eqn{x}'s
+\item {the highest cluster \eqn{c_1} and cluster-specific covariate(s) \eqn{x}'s
 are retained.
 \itemize{
 \item {If the input \code{formula} takes form of \code{y ~ . | c1} or \code{y ~ . - z1 | c1},
-then all covariates (except for \eqn{z_1}) are considered cluster-specific thus are all retained;}
-\item {\strong{Currently}, only the highest cluster \eqn{c_1} is retained.
-Sample quantiles from lower-level clusters are summarized using \code{f_sum_}.}
+then all covariates (except for \eqn{z_1}) are considered cluster-specific;}
+\item {Sample quantiles from lower-level clusters (e.g., \eqn{c_2}) are point-wise summarized using function \code{f_sum_}.}
 }
 }
 
 \item {response \eqn{y} is removed; instead,  a \link[base]{double} \link[base]{matrix} of \eqn{N} columns stores
-the cluster-specific sample \link[stats]{quantile}s \eqn{\mathbf{q}} of the response \eqn{y}.
+the cluster-specific sample \link[stats]{quantile}s.
 This \link[base]{matrix}
 \itemize{
 \item {is named after the \link[base]{parse}d \link[base]{expression} of response \eqn{y} in \code{formula};}
@@ -80,4 +73,3 @@ Sample \link[stats]{quantile}s in each cluster of observations.
 \examples{
 # see ?`Qindex-package` for examples
 }
-\keyword{internal}

@@ -2,15 +2,15 @@
 #' @title Alternative Standardization Methods
 #' 
 #' @description
-#' Alternative standardize using \link[stats]{median}, \link[stats]{IQR} and \link[stats]{mad}.
+#' Alternative standardization using \link[stats]{median}, \link[stats]{IQR} and \link[stats]{mad}.
 #' 
 #' @param x \link[base]{numeric} \link[base]{vector}
 #' 
 #' @param na.rm \link[base]{logical} scalar, 
-#' see \link[stats]{quantile}, \link[stats]{median} and \link[stats]{mad}.
+#' see functions \link[stats]{quantile}, \link[stats]{median} and \link[stats]{mad}.
 #' Default `TRUE`
 #' 
-#' @param ... additional parameters of \link[stats]{quantile} and/or \link[stats]{mad}
+#' @param ... additional parameters of functions \link[stats]{quantile} and/or \link[stats]{mad}
 #' 
 #' @return 
 #' 

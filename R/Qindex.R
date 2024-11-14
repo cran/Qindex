@@ -228,10 +228,6 @@ Qindex_prefit_ <- function(
 }
 
 
-FRindex <- function(...) {
-  .Defunct(msg = 'Use function Qindex() instead')
-}
-
 
 
 
@@ -254,10 +250,10 @@ FRindex <- function(...) {
 #' does not have a returned value.
 #' 
 #' @keywords internal
-#' @importFrom methods show signature
+#' @importFrom methods show
 #' @importFrom utils head
 #' @export
-setMethod(f = show, signature = signature(object = 'Qindex'), definition = function(object) {
+setMethod(f = show, signature = 'Qindex', definition = function(object) {
   
   cat('p-value from gam: test significance of `marker` as a functional predictor\n')
   print(object@p.value)
